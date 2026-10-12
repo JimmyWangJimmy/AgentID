@@ -1,8 +1,23 @@
-# Optional — Foundry not required for the primary TypeScript demo.
-# When forge is installed: forge test
+# AgentID — Foundry config (Monad Metropolis)
+# Primary TS demo still works without forge; on-chain path uses these settings.
+
 [profile.default]
 src = "contracts"
 test = "contracts"
+script = "script"
 out = "out"
 libs = ["lib"]
 solc_version = "0.8.20"
+optimizer = true
+optimizer_runs = 200
+evm_version = "paris"
+
+# Monad Testnet — https://docs.monad.xyz/developer-essentials/testnets
+# Chain ID 10143 · currency MON · faucet https://faucet.monad.xyz
+[rpc_endpoints]
+monad_testnet = "https://testnet-rpc.monad.xyz"
+# Override: forge … --rpc-url $RPC_URL
+
+[etherscan]
+# Block explorers (verify when supported):
+# https://testnet.monadvision.com · https://testnet.monadscan.com

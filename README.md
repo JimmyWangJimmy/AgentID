@@ -2,7 +2,7 @@
 
 **ERC-8004-inspired agent identity + attestation-based reputation for Trust / Identity & AI Infrastructure.**
 
-> AI agents operate across apps and chains without a shared identity or reputation layer. AgentID is a minimal registry: register an identity, accumulate attestations, and expose a portable reputation score. Primary demo is an in-memory TypeScript mock (always works); Solidity sources ship for Monad testnet when you are ready.
+> AI agents operate across apps and chains without a shared identity or reputation layer. AgentID is a minimal registry: register an identity, accumulate attestations, and expose a portable reputation score. TypeScript CLI demo always works offline; Solidity + Foundry target **Monad testnet** (chain id 10143).
 
 | | |
 |---|---|
@@ -92,27 +92,29 @@ npm run demo
 On-screen cues: `agentId: 1` → attest `score: 5` / `tag: reliable` → `getReputation` `score: 5` / `count: 1`. Clearly labeled **MOCK**.
 
 ---
-## Solidity (optional / secondary)
+## On-chain (Monad testnet)
 
-Interfaces and a minimal implementation live under `contracts/`:
+Solidity under `contracts/` + Foundry deploy script:
 
-- `IAgentRegistry.sol` — interface sketch
-- `AgentRegistry.sol` — implementation (score 1–5, sum aggregation)
-- `AgentRegistry.t.sol` — Foundry tests
-
-When [Foundry](https://book.getfoundry.sh/) is installed:
+- `IAgentRegistry.sol` / `AgentRegistry.sol` — identity + attest + reputation (score 1–5, sum)
+- `AgentRegistry.t.sol` — Foundry unit tests
+- `script/Deploy.s.sol` — broadcast deploy
+- Full steps: [`docs/ONCHAIN.md`](./docs/ONCHAIN.md)
 
 ```bash
-forge install foundry-rs/forge-std
-forge test
+forge install   # once
+forge test -vv
+# deploy (needs PRIVATE_KEY + faucet MON on Monad testnet 10143):
+# forge script script/Deploy.s.sol:Deploy --rpc-url monad_testnet --broadcast -vvvv
 ```
 
-Deploy to Monad testnet is **not** required for submission demo. Paste address here after deploy:
-
-```
-Contract: TBD
-Explorer: TBD
-```
+| | |
+|---|---|
+| **Chain** | Monad Testnet · id `10143` |
+| **RPC** | `https://testnet-rpc.monad.xyz` |
+| **Faucet** | https://faucet.monad.xyz |
+| **Contract** | TBD (after broadcast) |
+| **Explorer** | TBD |
 
 ## Repo layout
 

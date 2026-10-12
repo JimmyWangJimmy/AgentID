@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 import "./IAgentRegistry.sol";
 
-/// @title AgentRegistry — minimal AgentID implementation (Metropolis / Monad)
+/// @title AgentRegistry — AgentID on-chain registry (Metropolis / Monad)
 /// @notice Score policy: attestation score is int8 in [1, 5]; reputation = sum of scores.
-/// @dev Not audit-ready. Deploy on Monad testnet when ready; demo path uses TS mock.
+/// @dev Not audit-ready. Target: Monad testnet (chain id 10143).
 contract AgentRegistry is IAgentRegistryViews {
     uint256 private _nextId = 1;
 
@@ -15,19 +15,19 @@ contract AgentRegistry is IAgentRegistryViews {
     uint8 public constant SCORE_MIN = 1;
     uint8 public constant SCORE_MAX = 5;
 
-    function registerAgent(string calldata metadataURI)
+    function registerAgent(string calldata uri)
         external
         override
         returns (uint256 agentId)
     {
-        require(bytes(metadataURI).length > 0, "metadataURI required");
+        require(bytes(uri).length > 0, "metadataURI required");
         agentId = _nextId++;
         _agents[agentId] = Agent({
             owner: msg.sender,
-            metadataURI: metadataURI,
+            metadataURI: uri,
             createdAt: uint64(block.timestamp)
         });
-        emit AgentRegistered(agentId, msg.sender, metadataURI);
+        emit AgentRegistered(agentId, msg.sender, uri);
     }
 
     function ownerOf(uint256 agentId) external view override returns (address) {
@@ -56,7 +56,10 @@ contract AgentRegistry is IAgentRegistryViews {
         string calldata uri
     ) external override {
         require(_exists(agentId), "unknown agentId");
-        require(score >= int8(uint8(SCORE_MIN)) && score <= int8(uint8(SCORE_MAX)), "score out of range");
+        require(
+            score >= int8(uint8(SCORE_MIN)) && score <= int8(uint8(SCORE_MAX)),
+            "score out of range"
+        );
         require(tag != bytes32(0), "tag required");
         require(bytes(uri).length > 0, "uri required");
 

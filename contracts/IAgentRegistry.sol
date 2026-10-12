@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// @title IAgentRegistry — AgentID interface sketch (Metropolis / Monad)
+/// @title IAgentRegistry — AgentID interface (Metropolis / Monad)
 /// @notice Minimal ERC-8004-inspired identity + attestation + reputation view.
-/// @dev Interfaces only — not audit-ready; implement and deploy on Monad testnet as needed.
+/// @dev Not audit-ready. Deploy on Monad testnet (chain id 10143).
 interface IAgentRegistry {
     // ── Events ──────────────────────────────────────────────────────────
     event AgentRegistered(
@@ -22,9 +22,9 @@ interface IAgentRegistry {
 
     // ── Identity ────────────────────────────────────────────────────────
     /// @notice Register a new agent identity bound to msg.sender.
-    /// @param metadataURI Off-chain metadata (e.g. ipfs://… JSON with name, endpoints).
+    /// @param uri Off-chain metadata (e.g. ipfs://… JSON with name, endpoints).
     /// @return agentId Newly assigned unique id.
-    function registerAgent(string calldata metadataURI) external returns (uint256 agentId);
+    function registerAgent(string calldata uri) external returns (uint256 agentId);
 
     /// @notice Owner of an agent identity.
     function ownerOf(uint256 agentId) external view returns (address);
@@ -38,7 +38,7 @@ interface IAgentRegistry {
     // ── Attestations ────────────────────────────────────────────────────
     /// @notice Post an attestation about an agent.
     /// @param agentId Target agent.
-    /// @param score Signed score contribution (e.g. -10..10); policy defined by implementer.
+    /// @param score Score contribution; AgentRegistry policy is 1..5.
     /// @param tag Short category (e.g. keccak256("reliable")).
     /// @param uri Evidence / claim URI.
     function attest(
@@ -52,9 +52,7 @@ interface IAgentRegistry {
     function attestationCount(uint256 agentId) external view returns (uint256);
 
     // ── Reputation view ─────────────────────────────────────────────────
-    /// @notice Portable reputation snapshot.
-    /// @return score Aggregated score (sum or decay — implementer-defined).
-    /// @return count Number of attestations included.
+    /// @notice Portable reputation snapshot (sum of scores + count).
     function getReputation(uint256 agentId)
         external
         view
