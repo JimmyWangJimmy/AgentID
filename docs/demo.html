@@ -163,7 +163,8 @@
     <div class="titlebar">
       <h1>AgentID</h1>
       <div class="sub">On-chain Agent Identity &amp; Reputation Registry · Monad Metropolis<br/>Trust / Identity &amp; AI Infrastructure · Jimmy Wang</div>
-      <div class="badge">MOCK REGISTRY — NO CHAIN DEPLOY</div>
+      <div class="badge">LIVE on Monad testnet · 0x7Be0…ad13</div>
+      <div class="badge" style="margin-top:6px;opacity:.85">UI demo mirrors in-memory flow · <a href="https://testnet.monadvision.com/address/0x7Be01cFC771fA2FD292113dA83881E0deC56ad13" style="color:inherit">explorer</a></div>
     </div>
 
     <div class="terminal" id="terminal">
@@ -184,10 +185,12 @@
 <script>
 const DEMO_LINES = [
   { t: 0.5,  cls: "banner", text: "================================================================" },
-  { t: 0.7,  cls: "header", text: "  AgentID — Mock registry (in-memory)" },
+  { t: 0.7,  cls: "header", text: "  AgentID — register → attest → reputation" },
   { t: 0.9,  cls: "banner", text: "================================================================" },
   { t: 1.2,  cls: "meta",   text: "  Track: Trust / Identity & AI Infrastructure (Monad Metropolis)" },
-  { t: 1.5,  cls: "hl",     text: "  Mode:  MOCK — no chain deploy required" },
+  { t: 1.5,  cls: "hl",     text: "  On-chain: Monad testnet 0x7Be0…ad13" },
+  { t: 1.7,  cls: "meta",   text: "  Contract: 0x7Be01cFC771fA2FD292113dA83881E0deC56ad13" },
+  { t: 1.9,  cls: "meta",   text: "  This UI: in-memory walkthrough of the same API" },
   { t: 1.8,  cls: "meta",   text: "  Policy: attestation score 1–5; reputation = sum of scores" },
   { t: 2.1,  cls: "meta",   text: "  Author: Jimmy Wang" },
   { t: 2.6,  cls: "blank",  text: "" },
@@ -227,10 +230,11 @@ const DEMO_LINES = [
   { t: 30.3, cls: "header", text: "  Done — register → attest → score" },
   { t: 30.6, cls: "banner", text: "================================================================" },
   { t: 32.0, cls: "ok",     text: "  Portable trust in one call. That's AgentID." },
-  { t: 34.0, cls: "meta",   text: "  Solidity interfaces: contracts/IAgentRegistry.sol" },
-  { t: 35.5, cls: "meta",   text: "  Implementation sketch: contracts/AgentRegistry.sol" },
+  { t: 34.0, cls: "meta",   text: "  Live AgentRegistry on Monad testnet (10143)" },
+  { t: 35.5, cls: "meta",   text: "  0x7Be01cFC771fA2FD292113dA83881E0deC56ad13" },
+  { t: 36.5, cls: "meta",   text: "  Source: contracts/AgentRegistry.sol" },
   { t: 38.0, cls: "blank",  text: "" },
-  { t: 40.0, cls: "hl",     text: "  ★ MOCK registry demo complete · Metropolis Trust/Identity" },
+  { t: 40.0, cls: "hl",     text: "  ★ Demo complete · live on Monad testnet · Metropolis" },
   { t: 42.0, cls: "meta",   text: "  github.com/JimmyWangJimmy/AgentID" },
 ];
 

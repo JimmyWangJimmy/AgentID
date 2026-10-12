@@ -13,10 +13,11 @@ import "../contracts/AgentRegistry.sol";
 contract Deploy is Script {
     function run() external {
         uint256 pk = vm.envUint("PRIVATE_KEY");
+        address deployer = vm.addr(pk);
         vm.startBroadcast(pk);
         AgentRegistry registry = new AgentRegistry();
         console2.log("AgentRegistry deployed at:", address(registry));
-        console2.log("Deployer:", msg.sender);
+        console2.log("Deployer:", deployer);
         vm.stopBroadcast();
     }
 }

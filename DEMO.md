@@ -14,7 +14,7 @@ npm install
 npm run demo
 ```
 
-Label on screen: **Mock registry (in-memory)** — Solidity deploy pending; interfaces in `contracts/`.
+Label on screen: **LIVE on Monad testnet** `0x7Be01cFC771fA2FD292113dA83881E0deC56ad13` — UI walkthrough still uses in-memory registry (same API).
 
 ---
 
@@ -54,7 +54,7 @@ Label on screen: **Mock registry (in-memory)** — Solidity deploy pending; inte
 
 | # | Time | Screen | Action | Say (EN cue) |
 |---|------|--------|--------|--------------|
-| 1 | 0:00–0:08 | README / terminal title | Show project name + MOCK label | Intro + track |
+| 1 | 0:00–0:08 | README / terminal title | Show project name + live contract | Intro + track |
 | 2 | 0:08–0:18 | `npm run demo` section 1 | `registerAgent` → `agentId` | “Register an agent…” |
 | 3 | 0:18–0:35 | section 2 | Second wallet `attest` score 5 | “Second wallet attests…” |
 | 4 | 0:35–0:50 | section 3 | `getReputation` → score 5, count 1 | “Query reputation…” |
@@ -73,4 +73,4 @@ Label on screen: **Mock registry (in-memory)** — Solidity deploy pending; inte
 
 ---
 
-*Do not fake a mainnet explorer. Label mock vs live.*
+*Live contract: `0x7Be01cFC771fA2FD292113dA83881E0deC56ad13` on Monad testnet. UI demo is in-memory; do not fake a mainnet explorer.*

@@ -73,7 +73,7 @@ Screen-recording tips: see [`DEMO.md`](./DEMO.md).
 
 ## Demo (submission-ready)
 
-Interactive ~60s walkthrough of **register → attest → getReputation** (MOCK registry, no chain deploy):
+Interactive ~60s walkthrough of **register → attest → getReputation** (UI mirrors the live registry; TypeScript path is in-memory):
 
 | Asset | Link |
 |-------|------|
@@ -89,7 +89,7 @@ open docs/demo.html   # or: python3 -m http.server -d docs 8080
 npm run demo
 ```
 
-On-screen cues: `agentId: 1` → attest `score: 5` / `tag: reliable` → `getReputation` `score: 5` / `count: 1`. Clearly labeled **MOCK**.
+On-screen cues: `agentId: 1` → attest `score: 5` / `tag: reliable` → `getReputation` `score: 5` / `count: 1`. Live contract: [`0x7Be01cFC771fA2FD292113dA83881E0deC56ad13`](https://testnet.monadvision.com/address/0x7Be01cFC771fA2FD292113dA83881E0deC56ad13).
 
 ---
 ## On-chain (Monad testnet)
@@ -113,8 +113,10 @@ forge test -vv
 | **Chain** | Monad Testnet · id `10143` |
 | **RPC** | `https://testnet-rpc.monad.xyz` |
 | **Faucet** | https://faucet.monad.xyz |
-| **Contract** | TBD (after broadcast) |
-| **Explorer** | TBD |
+| **Contract** | [`0x7Be01cFC771fA2FD292113dA83881E0deC56ad13`](https://testnet.monadvision.com/address/0x7Be01cFC771fA2FD292113dA83881E0deC56ad13) |
+| **Deploy tx** | [`0x01a0d4f5…`](https://testnet.monadvision.com/tx/0x01a0d4f55603dac0a7d9425f0fd75935fea732156a6604d06d59ba274f8c3cd1) |
+| **Explorer** | [MonadVision](https://testnet.monadvision.com/address/0x7Be01cFC771fA2FD292113dA83881E0deC56ad13) · [Monadscan](https://testnet.monadscan.com/address/0x7Be01cFC771fA2FD292113dA83881E0deC56ad13) |
+| **Deployer** | ephemeral hackathon wallet `0xE713…3F41` (do not send mainnet funds) |
 
 ## Repo layout
 

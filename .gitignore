@@ -1,8 +1,12 @@
 node_modules/
 dist/
 .env
+.env.*
 coverage/
 .DS_Store
 cache/
 out/
-broadcast/
+# broadcast/ is committed for Monad testnet deploy provenance
+
+broadcast/**/*.recovery.lock
+broadcast/**/*.recovery.json

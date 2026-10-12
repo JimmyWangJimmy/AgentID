@@ -1,5 +1,23 @@
 # AgentID — On-chain deploy (Monad testnet)
 
+## Live deployment (Metropolis)
+
+| | |
+|---|---|
+| **Status** | Deployed |
+| **Network** | Monad Testnet · chain id `10143` |
+| **RPC** | `https://testnet-rpc.monad.xyz` |
+| **Contract** | [`0x7Be01cFC771fA2FD292113dA83881E0deC56ad13`](https://testnet.monadvision.com/address/0x7Be01cFC771fA2FD292113dA83881E0deC56ad13) |
+| **Deploy tx** | [`0x01a0d4f55603dac0a7d9425f0fd75935fea732156a6604d06d59ba274f8c3cd1`](https://testnet.monadvision.com/tx/0x01a0d4f55603dac0a7d9425f0fd75935fea732156a6604d06d59ba274f8c3cd1) |
+| **Explorers** | [MonadVision](https://testnet.monadvision.com/address/0x7Be01cFC771fA2FD292113dA83881E0deC56ad13) · [Monadscan](https://testnet.monadscan.com/address/0x7Be01cFC771fA2FD292113dA83881E0deC56ad13) |
+| **Deployer** | Ephemeral hackathon-only wallet `0xE713f7750A9dFbD2CA091ad75d77229786C73F41` — **no mainnet funds** |
+
+`forge test` 6/6 pass. Broadcast artifact: `broadcast/Deploy.s.sol/10143/run-latest.json`.
+
+---
+
+## Network reference
+
 **Network:** Monad Testnet  
 **Chain ID:** `10143`  
 **Currency:** `MON`  
@@ -68,7 +86,7 @@ forge create contracts/AgentRegistry.sol:AgentRegistry \
 ## Smoke-test on chain
 
 ```bash
-REG=0xDEPLOYED_ADDRESS
+REG=0x7Be01cFC771fA2FD292113dA83881E0deC56ad13
 
 # register (from deployer or any wallet)
 cast send "$REG" "registerAgent(string)" "ipfs://agentid-demo" \
@@ -84,9 +102,9 @@ cast call "$REG" "getReputation(uint256)(int256,uint256)" 1 \
   --rpc-url "$RPC_URL"
 ```
 
-## After deploy — update README
+## Redeploy notes
 
-Paste into `README.md`:
+README already lists the live address above. To redeploy (new ephemeral key + faucet):
 
 ```
 Contract: 0x…
@@ -94,7 +112,7 @@ Explorer: https://testnet.monadvision.com/address/0x…
 Chain ID: 10143
 ```
 
-## What Jimmy / parent must provide
+## What you need to redeploy
 
 | Item | Why |
 |------|-----|
