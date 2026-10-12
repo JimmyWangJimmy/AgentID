@@ -67,7 +67,7 @@ Registration files (HTTPS / Pages):
 
 | Asset | Link |
 |-------|------|
-| **Interactive HTML** (primary) | [GitHub Pages](https://jimmywangjimmy.github.io/AgentID/) · [`docs/demo.html`](./docs/demo.html) |
+| **Interactive HTML** (primary) | [GitHub Pages](https://jimmywangjimmy.github.io/AgentID/) · [`docs/index.html`](./docs/index.html) |
 | MP4 | [`docs/AgentID-demo-1min.mp4`](./docs/AgentID-demo-1min.mp4) — regenerate optional; HTML tells the raw-vs-weighted story |
 
 ```bash
@@ -76,7 +76,7 @@ npm install
 npm test          # vitest — raw + weighted + sybil ring
 npm run demo      # CLI walkthrough
 forge test -vv    # Solidity mirror
-open docs/demo.html
+open docs/index.html
 ```
 
 ---
