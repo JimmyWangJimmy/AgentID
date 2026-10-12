@@ -10,6 +10,7 @@ contract AgentRegistryTest is Test {
     address internal owner = address(0xA11CE);
     address internal attester = address(0xB0B);
     address internal attester2 = address(0xC0DE);
+    address internal attester3 = address(0xD00D);
 
     function setUp() public {
         registry = new AgentRegistry();
@@ -26,9 +27,10 @@ contract AgentRegistryTest is Test {
         vm.prank(attester);
         registry.attest(id, int8(5), keccak256("reliable"), "ipfs://ev");
 
-        (int256 score, uint256 count) = registry.getReputation(id);
-        assertEq(score, 5);
+        (int256 avgX100, uint256 count, uint256 unique) = registry.getReputation(id);
+        assertEq(avgX100, 500); // 5.00
         assertEq(count, 1);
+        assertEq(unique, 1);
         assertEq(registry.attestationCount(id), 1);
 
         IAgentRegistryViews.Attestation memory a = registry.getAttestation(id, 0);
@@ -37,7 +39,7 @@ contract AgentRegistryTest is Test {
         assertEq(a.tag, keccak256("reliable"));
     }
 
-    function test_multiple_attestations_sum() public {
+    function test_average_of_multiple_attesters() public {
         vm.prank(owner);
         uint256 id = registry.registerAgent("ipfs://meta");
 
@@ -46,9 +48,75 @@ contract AgentRegistryTest is Test {
         vm.prank(attester2);
         registry.attest(id, int8(3), keccak256("helpful"), "ipfs://ev2");
 
-        (int256 score, uint256 count) = registry.getReputation(id);
-        assertEq(score, 8);
+        // avg = (5+3)/2 = 4.00 → 400
+        (int256 avgX100, uint256 count, uint256 unique) = registry.getReputation(id);
+        assertEq(avgX100, 400);
         assertEq(count, 2);
+        assertEq(unique, 2);
+    }
+
+    function test_no_self_attest() public {
+        vm.prank(owner);
+        uint256 id = registry.registerAgent("ipfs://meta");
+
+        vm.prank(owner);
+        vm.expectRevert(bytes("no self-attest"));
+        registry.attest(id, int8(5), keccak256("reliable"), "ipfs://ev");
+    }
+
+    function test_replace_same_attester() public {
+        vm.prank(owner);
+        uint256 id = registry.registerAgent("ipfs://meta");
+
+        vm.prank(attester);
+        registry.attest(id, int8(2), keccak256("spam"), "ipfs://ev1");
+        assertEq(registry.attestationCount(id), 1);
+
+        // same attester overwrites — still one vote
+        vm.prank(attester);
+        registry.attest(id, int8(5), keccak256("reliable"), "ipfs://ev2");
+        assertEq(registry.attestationCount(id), 1);
+
+        IAgentRegistryViews.Attestation memory a = registry.getAttestation(id, 0);
+        assertEq(a.score, int8(5));
+        assertEq(a.tag, keccak256("reliable"));
+
+        (int256 avgX100, uint256 count, uint256 unique) = registry.getReputation(id);
+        assertEq(avgX100, 500);
+        assertEq(count, 1);
+        assertEq(unique, 1);
+    }
+
+    function test_good_vs_fake_scenario() public {
+        // GoodBot: 5, 5, 4 → avg 466
+        vm.prank(owner);
+        uint256 good = registry.registerAgent("ipfs://agentid/good-bot");
+        vm.prank(attester);
+        registry.attest(good, int8(5), keccak256("reliable"), "ipfs://g1");
+        vm.prank(attester2);
+        registry.attest(good, int8(5), keccak256("helpful"), "ipfs://g2");
+        vm.prank(attester3);
+        registry.attest(good, int8(4), keccak256("on-time"), "ipfs://g3");
+
+        // FakeBot: 1, 2 → avg 150
+        address fakeOwner = address(0xF111111111111111111111111111111111111111);
+        vm.prank(fakeOwner);
+        uint256 fake = registry.registerAgent("ipfs://agentid/fake-bot");
+        vm.prank(attester);
+        registry.attest(fake, int8(1), keccak256("spam"), "ipfs://f1");
+        vm.prank(attester2);
+        registry.attest(fake, int8(2), keccak256("impersonation"), "ipfs://f2");
+
+        (int256 goodAvg, uint256 goodCount, uint256 goodUnique) = registry.getReputation(good);
+        (int256 fakeAvg, uint256 fakeCount, uint256 fakeUnique) = registry.getReputation(fake);
+
+        assertEq(goodAvg, 466); // (5+5+4)*100/3 = 1400/3 = 466
+        assertEq(goodCount, 3);
+        assertEq(goodUnique, 3);
+        assertEq(fakeAvg, 150); // (1+2)*100/2 = 150
+        assertEq(fakeCount, 2);
+        assertEq(fakeUnique, 2);
+        assertGt(goodAvg, fakeAvg);
     }
 
     function test_score_out_of_range_reverts() public {
@@ -89,5 +157,14 @@ contract AgentRegistryTest is Test {
         vm.prank(attester);
         vm.expectRevert(bytes("uri required"));
         registry.attest(id, int8(5), keccak256("reliable"), "");
+    }
+
+    function test_zero_attestations_reputation() public {
+        vm.prank(owner);
+        uint256 id = registry.registerAgent("ipfs://meta");
+        (int256 avg, uint256 count, uint256 unique) = registry.getReputation(id);
+        assertEq(avg, 0);
+        assertEq(count, 0);
+        assertEq(unique, 0);
     }
 }

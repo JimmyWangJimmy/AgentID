@@ -1,10 +1,13 @@
 /**
  * AgentID — in-memory Agent Registry (mock of on-chain IAgentRegistry).
  *
- * Reputation policy (documented, stable for demo):
+ * Reputation policy (same as Solidity AgentRegistry):
  * - Attestation score must be an integer in [1, 5].
- * - Aggregated score = sum of all attestation scores for that agent.
- * - count = number of attestations.
+ * - No self-attest: attester cannot be the agent owner.
+ * - One vote per attester: a second attest from the same address overwrites.
+ * - getReputation → averageScoreX100 (e.g. 4.5 → 450), count, uniqueAttesters.
+ *
+ * Suggested tags: reliable, helpful, on-time, spam, impersonation.
  *
  * Addresses are opaque strings (wallet hex or labels) so the CLI demo
  * works without a real chain.
@@ -27,8 +30,10 @@ export interface Attestation {
 }
 
 export interface Reputation {
-  score: number;
+  /** Average score × 100 (e.g. 4.5 → 450). 0 when count is 0. */
+  averageScoreX100: number;
   count: number;
+  uniqueAttesters: number;
   owner: Address;
   metadataURI: string;
 }
@@ -36,10 +41,21 @@ export interface Reputation {
 export const SCORE_MIN = 1;
 export const SCORE_MAX = 5;
 
+/** Story tags used in GoodBot vs FakeBot seed / demo. */
+export const TAGS = {
+  reliable: "reliable",
+  helpful: "helpful",
+  onTime: "on-time",
+  spam: "spam",
+  impersonation: "impersonation",
+} as const;
+
 export class AgentRegistry {
   private nextId = 1;
   private agents = new Map<number, Agent>();
   private attestations = new Map<number, Attestation[]>();
+  /** agentId → attester → index in attestations array */
+  private attesterIndex = new Map<number, Map<string, number>>();
 
   /** Register a new agent bound to `owner`. Returns agentId. */
   registerAgent(owner: Address, metadataURI: string): number {
@@ -56,6 +72,7 @@ export class AgentRegistry {
       createdAt: Date.now(),
     });
     this.attestations.set(agentId, []);
+    this.attesterIndex.set(agentId, new Map());
     return agentId;
   }
 
@@ -76,8 +93,9 @@ export class AgentRegistry {
   }
 
   /**
-   * Post an attestation from `attester`.
+   * Post or replace an attestation from `attester`.
    * Score must be integer in [SCORE_MIN, SCORE_MAX] (1–5).
+   * Rejects self-attest; one vote per attester (overwrite).
    */
   attest(
     attester: Address,
@@ -86,9 +104,13 @@ export class AgentRegistry {
     tag: string,
     evidenceURI: string
   ): void {
-    this.requireAgent(agentId);
+    const agent = this.requireAgent(agentId);
     if (!attester || !attester.trim()) {
       throw new Error("attester address required");
+    }
+    const who = attester.trim();
+    if (who === agent.owner) {
+      throw new Error("no self-attest");
     }
     if (!Number.isInteger(score) || score < SCORE_MIN || score > SCORE_MAX) {
       throw new Error(
@@ -102,14 +124,23 @@ export class AgentRegistry {
       throw new Error("evidenceURI required");
     }
 
-    const list = this.attestations.get(agentId)!;
-    list.push({
-      attester: attester.trim(),
+    const entry: Attestation = {
+      attester: who,
       score,
       tag: tag.trim(),
       evidenceURI: evidenceURI.trim(),
       createdAt: Date.now(),
-    });
+    };
+
+    const list = this.attestations.get(agentId)!;
+    const indexMap = this.attesterIndex.get(agentId)!;
+    const existing = indexMap.get(who);
+    if (existing === undefined) {
+      indexMap.set(who, list.length);
+      list.push(entry);
+    } else {
+      list[existing] = entry;
+    }
   }
 
   attestationCount(agentId: number): number {
@@ -126,14 +157,29 @@ export class AgentRegistry {
     return { ...list[index] };
   }
 
-  /** Portable reputation: sum of scores + count + identity fields. */
+  /**
+   * Portable reputation: average ×100 + count + unique attesters + identity.
+   * averageScoreX100 uses integer division (same as Solidity).
+   */
   getReputation(agentId: number): Reputation {
     const agent = this.requireAgent(agentId);
     const list = this.attestations.get(agentId)!;
-    const score = list.reduce((sum, a) => sum + a.score, 0);
+    const count = list.length;
+    if (count === 0) {
+      return {
+        averageScoreX100: 0,
+        count: 0,
+        uniqueAttesters: 0,
+        owner: agent.owner,
+        metadataURI: agent.metadataURI,
+      };
+    }
+    const sum = list.reduce((s, a) => s + a.score, 0);
+    const averageScoreX100 = Math.trunc((sum * 100) / count);
     return {
-      score,
-      count: list.length,
+      averageScoreX100,
+      count,
+      uniqueAttesters: count, // one vote per attester
       owner: agent.owner,
       metadataURI: agent.metadataURI,
     };

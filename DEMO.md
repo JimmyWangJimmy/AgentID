@@ -1,7 +1,8 @@
 # AgentID Demo Script · ~1 minute
 
-**Goal:** Screen recording of **register → attest → score** for Metropolis submission.  
-**Project:** AgentID — On-chain Agent Identity & Reputation Registry on Monad  
+**Goal:** Show **GoodBot vs FakeBot** — sybil-lite average reputation on Monad.  
+**Primary demo:** interactive HTML ([GitHub Pages](https://jimmywangjimmy.github.io/AgentID/)).  
+**Video:** `docs/AgentID-demo-1min.mp4` regenerated to match the contrast story.  
 **Track:** Trust / Identity & AI Infrastructure
 
 ---
@@ -10,67 +11,40 @@
 
 ```bash
 cd AgentID
-npm install
-npm run demo
+npm install && npm test && npm run demo
+open docs/demo.html   # or Pages URL
 ```
 
-Label on screen: **LIVE on Monad testnet** `0x7Be01cFC771fA2FD292113dA83881E0deC56ad13` — UI walkthrough still uses in-memory registry (same API).
+On-screen badge: **LIVE on Monad testnet** `0xDCcBbFFC7D0912674760579fAba210a2a729f859`.
 
 ---
 
-## Spoken lines (read aloud)
+## Spoken lines (EN ~55–60s)
 
-### English (~55–60s)
-
-> Hi — I'm Jimmy Wang. This is **AgentID**, an ERC-8004-inspired on-chain agent identity and reputation registry on Monad, for the Trust / Identity track.
+> Hi — I'm Jimmy Wang. This is **AgentID**: portable agent identity and reputation on Monad.
 >
-> **Problem:** Agents move across apps and chains with no shared identity — trust resets everywhere.
+> **Problem:** two agents both claim to be helpful. Without shared reputation, you cannot tell which to trust.
 >
-> **Demo:** First I **register** an agent — owner wallet plus a metadata URI — and we get an `agentId`.
+> We register **GoodBot** and **FakeBot** on Monad testnet. Peers attest GoodBot 5, 5, 4 — FakeBot gets flagged 1 and 2 for spam and impersonation.
 >
-> Next, a second wallet **attests**: score, tag, evidence URI.
+> **Rules that matter:** no self-attest, one vote per attester, and reputation is an **average** — not a spam-able sum.
 >
-> Finally I **query reputation** — score goes up, attestation count is one. Portable trust in one call.
->
-> That's AgentID: register, attest, score. Built solo for Metropolis on Monad. Thanks!
-
-### 中文（约 55–60 秒）
-
-> 大家好，我是 Jimmy Wang。这是 **AgentID**：受 ERC-8004 启发、跑在 Monad 上的链上 Agent 身份与信誉登记，面向 Trust / Identity 赛道。
->
-> **问题：** Agent 跨应用、跨链没有共享身份，信任每次都要重来。
->
-> **演示：** 先 **注册** 一个 Agent——绑定拥有者钱包和 metadata URI，拿到 `agentId`。
->
-> 然后用第二个钱包 **背书**：分数、标签、证据 URI。
->
-> 最后 **查询信誉**——分数上升，背书数为 1。一次调用就能看到可迁移的信任。
->
-> 这就是 AgentID：注册、背书、打分。Metropolis 个人项目。谢谢！
+> Result: GoodBot **4.66** vs FakeBot **1.50**. Live on-chain. That's AgentID for Metropolis Trust / Identity. Thanks!
 
 ---
 
-## Shot list (~60s)
+## Shot list
 
-| # | Time | Screen | Action | Say (EN cue) |
-|---|------|--------|--------|--------------|
-| 1 | 0:00–0:08 | README / terminal title | Show project name + live contract | Intro + track |
-| 2 | 0:08–0:18 | `npm run demo` section 1 | `registerAgent` → `agentId` | “Register an agent…” |
-| 3 | 0:18–0:35 | section 2 | Second wallet `attest` score 5 | “Second wallet attests…” |
-| 4 | 0:35–0:50 | section 3 | `getReputation` → score 5, count 1 | “Query reputation…” |
-| 5 | 0:50–1:00 | README / repo | Point to GitHub | Close + thanks |
+| # | Time | Screen | Cue |
+|---|------|--------|-----|
+| 1 | 0:00–0:10 | HTML hero | Problem hook + three rule badges |
+| 2 | 0:10–0:25 | Cards appear | Register GoodBot + FakeBot |
+| 3 | 0:25–0:40 | Tags fill | Attestations + explorer links |
+| 4 | 0:40–0:55 | Verdict | 4.66 vs 1.50 · average ×100 |
+| 5 | 0:55–1:00 | Footer | Contract address + thanks |
 
-**Tips:** Large font; zoom 125–150%; one happy path only.
-
----
-
-## Recording checklist
-
-- [ ] Mic clear; close notifications
-- [ ] 1080p, ~60s, mp4 or Loom
-- [ ] Filename: `AgentID-demo-1min.mp4`
-- [ ] Link pasted into Metropolis project + README
+**Tips:** Prefer the HTML autoplay walkthrough; CLI (`npm run demo`) is the backup.
 
 ---
 
-*Live contract: `0x7Be01cFC771fA2FD292113dA83881E0deC56ad13` on Monad testnet. UI demo is in-memory; do not fake a mainnet explorer.*
+*Live contract: `0xDCcBbFFC7D0912674760579fAba210a2a729f859`. HTML is the primary judge-facing demo.*

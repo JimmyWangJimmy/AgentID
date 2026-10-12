@@ -3,11 +3,13 @@ import {
   AgentRegistry,
   SCORE_MIN,
   SCORE_MAX,
+  TAGS,
 } from "../src/registry.js";
 
 const OWNER = "0xOwner";
 const ATTESTER_A = "0xAttesterA";
 const ATTESTER_B = "0xAttesterB";
+const ATTESTER_C = "0xAttesterC";
 
 describe("AgentRegistry", () => {
   let registry: AgentRegistry;
@@ -36,13 +38,35 @@ describe("AgentRegistry", () => {
   describe("attest", () => {
     it("records attestation and updates count", () => {
       const id = registry.registerAgent(OWNER, "ipfs://meta");
-      registry.attest(ATTESTER_A, id, 5, "reliable", "ipfs://ev");
+      registry.attest(ATTESTER_A, id, 5, TAGS.reliable, "ipfs://ev");
       expect(registry.attestationCount(id)).toBe(1);
       const a = registry.getAttestation(id, 0);
       expect(a.attester).toBe(ATTESTER_A);
       expect(a.score).toBe(5);
       expect(a.tag).toBe("reliable");
       expect(a.evidenceURI).toBe("ipfs://ev");
+    });
+
+    it("rejects self-attest", () => {
+      const id = registry.registerAgent(OWNER, "ipfs://meta");
+      expect(() =>
+        registry.attest(OWNER, id, 5, TAGS.reliable, "ipfs://ev")
+      ).toThrow(/no self-attest/);
+    });
+
+    it("replaces prior vote from same attester", () => {
+      const id = registry.registerAgent(OWNER, "ipfs://meta");
+      registry.attest(ATTESTER_A, id, 2, TAGS.spam, "ipfs://e1");
+      expect(registry.attestationCount(id)).toBe(1);
+      registry.attest(ATTESTER_A, id, 5, TAGS.reliable, "ipfs://e2");
+      expect(registry.attestationCount(id)).toBe(1);
+      const a = registry.getAttestation(id, 0);
+      expect(a.score).toBe(5);
+      expect(a.tag).toBe("reliable");
+      const rep = registry.getReputation(id);
+      expect(rep.averageScoreX100).toBe(500);
+      expect(rep.count).toBe(1);
+      expect(rep.uniqueAttesters).toBe(1);
     });
 
     it("rejects score outside 1–5", () => {
@@ -73,21 +97,23 @@ describe("AgentRegistry", () => {
   });
 
   describe("getReputation", () => {
-    it("sums scores and returns identity fields", () => {
+    it("returns average ×100 and unique attesters", () => {
       const id = registry.registerAgent(OWNER, "ipfs://meta");
       expect(registry.getReputation(id)).toEqual({
-        score: 0,
+        averageScoreX100: 0,
         count: 0,
+        uniqueAttesters: 0,
         owner: OWNER,
         metadataURI: "ipfs://meta",
       });
 
-      registry.attest(ATTESTER_A, id, 5, "reliable", "ipfs://e1");
-      registry.attest(ATTESTER_B, id, 3, "helpful", "ipfs://e2");
+      registry.attest(ATTESTER_A, id, 5, TAGS.reliable, "ipfs://e1");
+      registry.attest(ATTESTER_B, id, 3, TAGS.helpful, "ipfs://e2");
 
       const rep = registry.getReputation(id);
-      expect(rep.score).toBe(8);
+      expect(rep.averageScoreX100).toBe(400); // (5+3)/2 * 100
       expect(rep.count).toBe(2);
+      expect(rep.uniqueAttesters).toBe(2);
       expect(rep.owner).toBe(OWNER);
       expect(rep.metadataURI).toBe("ipfs://meta");
     });
@@ -97,25 +123,25 @@ describe("AgentRegistry", () => {
     });
   });
 
-  describe("happy path register → attest → score", () => {
-    it("matches the demo walkthrough", () => {
-      const id = registry.registerAgent(
-        "0xOwner111111111111111111111111111111111111",
-        "ipfs://QmAgentMetaDemo001"
-      );
-      expect(id).toBe(1);
+  describe("good vs fake story", () => {
+    it("GoodBot average clearly beats FakeBot", () => {
+      const good = registry.registerAgent(OWNER, "ipfs://agentid/good-bot");
+      registry.attest(ATTESTER_A, good, 5, TAGS.reliable, "ipfs://g1");
+      registry.attest(ATTESTER_B, good, 5, TAGS.helpful, "ipfs://g2");
+      registry.attest(ATTESTER_C, good, 4, TAGS.onTime, "ipfs://g3");
 
-      registry.attest(
-        "0xAttester2222222222222222222222222222222222",
-        id,
-        5,
-        "reliable",
-        "ipfs://QmEvidenceDemo001"
-      );
+      const fakeOwner = "0xFakeOwner";
+      const fake = registry.registerAgent(fakeOwner, "ipfs://agentid/fake-bot");
+      registry.attest(ATTESTER_A, fake, 1, TAGS.spam, "ipfs://f1");
+      registry.attest(ATTESTER_B, fake, 2, TAGS.impersonation, "ipfs://f2");
 
-      const rep = registry.getReputation(id);
-      expect(rep.score).toBe(5);
-      expect(rep.count).toBe(1);
+      const goodRep = registry.getReputation(good);
+      const fakeRep = registry.getReputation(fake);
+      expect(goodRep.averageScoreX100).toBe(466); // (5+5+4)*100/3
+      expect(goodRep.count).toBe(3);
+      expect(fakeRep.averageScoreX100).toBe(150); // (1+2)*100/2
+      expect(fakeRep.count).toBe(2);
+      expect(goodRep.averageScoreX100).toBeGreaterThan(fakeRep.averageScoreX100);
     });
   });
 });

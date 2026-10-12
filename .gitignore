@@ -10,3 +10,6 @@ out/
 
 broadcast/**/*.recovery.lock
 broadcast/**/*.recovery.json
+
+docs/frames/
+*.recovery.lock
