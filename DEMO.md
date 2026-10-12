@@ -1,47 +1,33 @@
-# AgentID — Demo guide for judges
+# AgentID Demo
 
-**Primary surface:** https://jimmywangjimmy.github.io/AgentID/  
-(GitHub Pages serves `docs/index.html`. `docs/demo.html` is kept in sync.)
+**Live:** https://jimmywangjimmy.github.io/AgentID/
 
-## 60-second presentation
+## How to watch (30s)
 
-1. **Fullscreen** the Pages demo (1280+ wide looks best).
-2. Click **SybilBot** first — or let the auto-play story reach step 3–4.
-3. Point at the dual meters: **raw 4.00** (amber) vs **weighted 1.22** (red) + the **EXPOSED** ribbon.
-4. Contrast with GoodBot (both high) and FakeBot (both low).
-5. Show the **LIVE** / **CACHED** badge — live = `eth_call` to Monad RPC; cached = explorer-verified numbers from `docs/ONCHAIN.md`.
-6. Optional: Copy contract address from the proof strip → open MonadVision.
+1. Open fullscreen.
+2. Leave **Auto demo** on — every ~8s it flips **Raw average ↔ Trust-weighted**.
+3. Watch the punchline:
+   - **Raw:** SybilBot billboard shows **4.00**; pink puppet edges glow on the ring graph.
+   - **Weighted:** Sybil’s number **animates down 4.00 → 1.22**, EXPOSED badge fires, puppet edges dim, cyan seed edge dominates — the ring collapses.
+4. GoodBot stays high (~4.66→4.69); FakeBot stays low (~1.50→1.44).
 
-Keyboard: `1`–`4` jump story steps · `Space` play/pause.
+## What’s on the page
 
-## Punchline
+| Visual | Role |
+|--------|------|
+| Dual-mode scoreboard | Billboard scores + gauges; Raw↔Weighted toggle |
+| Sybil ring (canvas force graph) | 3 puppets ★5 (w=10) + seed flag ★1 (w=500) |
+| Δ chart | weighted − raw; Sybil’s −2.78 in warning red |
+| LIVE RPC | `eth_call` to scorer on Monad testnet (falls back to ONCHAIN.md cache) |
 
-> ERC-8004 gives public feedback. AgentID is the anti-Sybil aggregator — a sockpuppet ring looks fine on **raw 4.00**, then **dies at weighted 1.22**.
+## On-chain proof
 
-| Agent | Official 8004 | Raw | Weighted |
-|-------|---------------|-----|----------|
-| GoodBot | #2204 | 4.66 | 4.69 |
-| FakeBot | #2205 | 1.50 | 1.44 |
-| SybilBot | #2206 | **4.00** | **1.22** |
+- Scorer: [`0x8916357EDB7598d20E257404213CF3D1C099c310`](https://testnet.monadvision.com/address/0x8916357EDB7598d20E257404213CF3D1C099c310)
+- GoodBot raw/w **466/469** · FakeBot **150/144** · SybilBot **400/122**
+- ERC-8004 Identity ids: Good **#2204** · Fake **#2205** · Sybil **#2206**
 
-Scorer: `0x8916357EDB7598d20E257404213CF3D1C099c310` (Monad testnet 10143).
+Details: [`docs/ONCHAIN.md`](./docs/ONCHAIN.md) · research: [`docs/RESEARCH.md`](./docs/RESEARCH.md)
 
-## Assets
+## Video
 
-| Asset | Link |
-|-------|------|
-| Interactive HTML (primary) | [Pages](https://jimmywangjimmy.github.io/AgentID/) · [`docs/index.html`](./docs/index.html) |
-| MP4 (optional) | [`docs/AgentID-demo-1min.mp4`](./docs/AgentID-demo-1min.mp4) — may lag the new UI; prefer HTML |
-| CLI walkthrough | `npm run demo` |
-
-Regenerate video (optional): `python3 docs/generate_demo_video.py` if Pillow/ffmpeg available.
-
-## Design notes (v4 demo)
-
-Inspired by (patterns reimplemented, not copied):
-
-- **TrustGate** (calderbuild) — wallet-free live agent cards + clear verdict
-- **AgentTrust** — three seeded agents, ALLOW/DENY contrast table
-- **8004 explorers / Dark Web3 landings** — dark violet/cyan hero, Inter + mono numbers, proof strip with copy
-
-No MOCK energy: product UI, live RPC with graceful cache fallback.
+Optional clip: [`docs/AgentID-demo-1min.mp4`](./docs/AgentID-demo-1min.mp4) — prefer the live Pages demo for the animated Raw→Weighted drop.
