@@ -2,8 +2,9 @@
 pragma solidity ^0.8.20;
 
 /// @title IAgentRegistry — AgentID interface (Metropolis / Monad)
-/// @notice ERC-8004-inspired identity + sybil-lite attestation + average reputation.
+/// @notice ERC-8004-aligned identity + sybil-lite attest + EigenTrust-lite weighted reputation.
 /// @dev Not audit-ready. Deploy on Monad testnet (chain id 10143).
+///      AgentID is the anti-Sybil aggregator: ERC-8004 publishes feedback; we decide whom to believe.
 interface IAgentRegistry {
     // ── Events ──────────────────────────────────────────────────────────
     event AgentRegistered(
@@ -20,28 +21,25 @@ interface IAgentRegistry {
         string uri
     );
 
+    event SeedWeightSet(address indexed who, uint256 weight);
+
     // ── Identity ────────────────────────────────────────────────────────
     /// @notice Register a new agent identity bound to msg.sender.
-    /// @param uri Off-chain metadata (e.g. ipfs://… JSON with name, endpoints).
+    /// @param uri Off-chain metadata (HTTPS registration-v1 JSON preferred).
     /// @return agentId Newly assigned unique id.
     function registerAgent(string calldata uri) external returns (uint256 agentId);
 
-    /// @notice Owner of an agent identity.
     function ownerOf(uint256 agentId) external view returns (address);
 
-    /// @notice Metadata URI for an agent.
     function metadataURI(uint256 agentId) external view returns (string memory);
 
-    /// @notice Total number of registered agents.
     function totalAgents() external view returns (uint256);
 
+    /// @notice Primary agent id for an owner (latest registration). 0 if none.
+    function agentOfOwner(address owner) external view returns (uint256);
+
     // ── Attestations (sybil-lite) ────────────────────────────────────────
-    /// @notice Post or replace an attestation about an agent.
     /// @dev Policy: no self-attest; one vote per attester (overwrite prior).
-    /// @param agentId Target agent.
-    /// @param score Score contribution; policy is 1..5.
-    /// @param tag Short category (e.g. keccak256("reliable"), keccak256("spam")).
-    /// @param uri Evidence / claim URI.
     function attest(
         uint256 agentId,
         int8 score,
@@ -49,12 +47,10 @@ interface IAgentRegistry {
         string calldata uri
     ) external;
 
-    /// @notice Number of attestations recorded for an agent (= unique attesters).
     function attestationCount(uint256 agentId) external view returns (uint256);
 
-    // ── Reputation view ─────────────────────────────────────────────────
-    /// @notice Portable reputation: average score ×100, count, unique attesters.
-    /// @dev averageScoreX100: e.g. 4.5 → 450. When count=0 → (0, 0, 0).
+    // ── Reputation views ────────────────────────────────────────────────
+    /// @notice Unweighted average ×100 (baseline / comparison).
     function getReputation(uint256 agentId)
         external
         view
@@ -63,6 +59,19 @@ interface IAgentRegistry {
             uint256 count,
             uint256 uniqueAttesters
         );
+
+    /// @notice EigenTrust-lite: one-hop weight from attester's unweighted rep or seed.
+    function getWeightedReputation(uint256 agentId)
+        external
+        view
+        returns (
+            int256 weightedAvgX100,
+            uint256 count,
+            uint256 uniqueAttesters
+        );
+
+    /// @notice Weight used for an attester wallet (BASE / seed / agent unweighted avg).
+    function attesterWeight(address who) external view returns (uint256);
 }
 
 /// @title Optional read helpers for agent cards / indexers
@@ -87,4 +96,10 @@ interface IAgentRegistryViews is IAgentRegistry {
         external
         view
         returns (Attestation memory);
+
+    function setSeedWeight(address who, uint256 weight) external;
+
+    function seedWeight(address who) external view returns (uint256);
+
+    function oracle() external view returns (address);
 }

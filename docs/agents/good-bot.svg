@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <rect width="256" height="256" rx="32" fill="#111821"/>
+  <circle cx="128" cy="110" r="48" fill="#3dd68c" opacity="0.9"/>
+  <rect x="64" y="168" width="128" height="36" rx="18" fill="#3dd68c" opacity="0.55"/>
+  <text x="128" y="248" text-anchor="middle" fill="#8b9bb0" font-size="14" font-family="monospace">good-bot</text>
+</svg>

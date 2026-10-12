@@ -1,0 +1,49 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "FakeBot",
+  "description": "Impersonation / spam agent. Low scores from trusted reviewers \u2014 raw and weighted reputation stay toxic.",
+  "image": "https://jimmywangjimmy.github.io/AgentID/agents/fake-bot.svg",
+  "services": [
+    {
+      "name": "web",
+      "endpoint": "https://jimmywangjimmy.github.io/AgentID/"
+    },
+    {
+      "name": "A2A",
+      "endpoint": "https://jimmywangjimmy.github.io/AgentID/agents/fake-bot.agent-card.json",
+      "version": "0.3.0"
+    },
+    {
+      "name": "DID",
+      "endpoint": "did:example:agentid-fakebot",
+      "version": "v1"
+    }
+  ],
+  "x402Support": false,
+  "active": true,
+  "registrations": [
+    {
+      "agentId": 2,
+      "agentRegistry": "eip155:10143:0x8916357EDB7598d20E257404213CF3D1C099c310"
+    },
+    {
+      "agentId": 2205,
+      "agentRegistry": "eip155:10143:0x8004A818BFB912233c491871b3d84c89A494BD9e"
+    }
+  ],
+  "supportedTrust": [
+    "reputation"
+  ],
+  "agentid": {
+    "caip2": "eip155:10143",
+    "scoringContract": "0x8916357EDB7598d20E257404213CF3D1C099c310",
+    "scoring": "eigenTrust-lite",
+    "policy": [
+      "no-self-attest",
+      "one-vote-per-attester",
+      "raw-vs-weighted",
+      "seed-pretrust"
+    ],
+    "agentIdOnScorer": 2
+  }
+}

@@ -1,76 +1,81 @@
-# AgentID — On-chain Agent Identity & Reputation Registry on Monad
+# AgentID — Anti-Sybil Aggregator for ERC-8004 on Monad
 
-**ERC-8004-inspired agent identity + sybil-lite attestation reputation for Trust / Identity & AI Infrastructure.**
+**ERC-8004 publishes feedback. AgentID decides whom to believe.**
 
-## Why AgentID
+Metropolis Track *Trust / Identity & AI Infrastructure* · EigenTrust-lite weighted reputation · live Sybil-ring proof on Monad testnet.
 
-1. **Sybil-lite attestations** — no self-attest; one vote per attester (overwrite, not spam-sum).
-2. **Portable average reputation** — `getReputation` returns average ×100 + count + unique attesters, so agents can carry trust across apps.
-3. **Live on Monad testnet** with a **GoodBot vs FakeBot** seeded story and explorer proof — judges can verify the contrast on-chain.
+> A sockpuppet ring looks fine on **raw** average — it **dies** on **trust-weighted** score.
 
-| | |
-|---|---|
-| **Hackathon** | Monad Metropolis |
-| **Track** | Trust / Identity & AI Infrastructure |
-| **Builder** | Jimmy Wang · Tsinghua CS + Linguistics (MSc) · Shenzhen · AI Agents |
-| **License** | MIT |
+Deep dive: [`docs/RESEARCH.md`](./docs/RESEARCH.md)
 
 ---
 
-## The highlight: GoodBot vs FakeBot
+## Why AgentID (30s)
 
-Two agents both claim to be helpful. Without portable reputation you cannot tell which to trust.
-
-| | **GoodBot** (#1) | **FakeBot** (#2) |
-|---|---|---|
-| Metadata | `ipfs://agentid/good-bot` | `ipfs://agentid/fake-bot` |
-| Attestations | 5 / 5 / 4 · reliable / helpful / on-time | 1 / 2 · spam / impersonation |
-| **Average ×100** | **466** (4.66) | **150** (1.50) |
-| Unique attesters | 3 | 2 |
-
-Same API for both. Headline metric is **average**, not a sum attackers can inflate.
-
-### Policy (Solidity + TypeScript, same semantics)
+1. **ERC-8004-aligned** — registration-v1 JSON, CAIP-2 ids, dual-path to official IdentityRegistry on Monad testnet.
+2. **EigenTrust-lite** — `getWeightedReputation` weights each attestation by the attester’s seed / one-hop unweighted reputation (not recursive).
+3. **On-chain Sybil proof** — GoodBot / FakeBot / SybilBot with explorer links: Sybil raw **4.00** → weighted **1.22**.
 
 | Rule | Behavior |
 |------|----------|
-| Score range | Integer **1–5** |
-| No self-attest | Agent owner cannot attest their own agent |
-| One vote / attester | Second attest from same address **overwrites** |
-| Reputation | `(averageScoreX100, count, uniqueAttesters)` — e.g. 4.5 → `450` |
+| Score | Integer **1–5** |
+| No self-attest | Owner cannot attest own agent |
+| One vote / attester | Overwrite, not spam-sum |
+| Raw | `getReputation` → avg ×100 |
+| Weighted | `getWeightedReputation` → seed / earned-weight avg ×100 |
 
 ---
 
-## Live on Monad testnet
+## Live proof (v3)
 
 | | |
 |---|---|
-| **Chain** | Monad Testnet · id `10143` |
-| **RPC** | `https://testnet-rpc.monad.xyz` |
-| **Contract** | [`0xDCcBbFFC7D0912674760579fAba210a2a729f859`](https://testnet.monadvision.com/address/0xDCcBbFFC7D0912674760579fAba210a2a729f859) |
-| **Deploy tx** | [`0xbf6e15f6…`](https://testnet.monadvision.com/tx/0xbf6e15f64d19b8ac558a2c5a93d9f2fb12de2f9c8facdd90966ef694f412a3ab) |
-| **GoodBot register** | [`0x830a1a87…`](https://testnet.monadvision.com/tx/0x830a1a87b1cbeacbf321d9284db4b876de9198e77b1a7ca29d7b8e2ca4995f0c) |
-| **FakeBot register** | [`0x4c583cef…`](https://testnet.monadvision.com/tx/0x4c583cef5f4a1db9348c39906acc821b1872e769f1a96b54531faf175c917ede) |
-| **Explorer** | [MonadVision](https://testnet.monadvision.com/address/0xDCcBbFFC7D0912674760579fAba210a2a729f859) |
-| **Superseded** | Old demo `0x7Be01cFC…ad13` (pre sybil-lite / average) |
+| **Chain** | Monad Testnet · `10143` |
+| **AgentID scorer** | [`0x8916357EDB7598d20E257404213CF3D1C099c310`](https://testnet.monadvision.com/address/0x8916357EDB7598d20E257404213CF3D1C099c310) |
+| **Official Identity** | [`0x8004A818…BD9e`](https://testnet.monadvision.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) (CREATE2) |
+| **Deploy tx** | [`0x24f5ef3e…`](https://testnet.monadvision.com/tx/0x24f5ef3e290ee44b2d3c4c75c60b0041f3a296f17db7237c6cd50ab90fe98031) |
 
-Full deploy + seed notes: [`docs/ONCHAIN.md`](./docs/ONCHAIN.md).
+| Agent | Scorer id | Official 8004 id | Raw ×100 | Weighted ×100 |
+|-------|-----------|------------------|----------|---------------|
+| **GoodBot** | 1 | 2204 | **466** | **469** |
+| **FakeBot** | 2 | 2205 | **150** | **144** |
+| **SybilBot** | 3 | 2206 | **400** | **122** ← dies |
+
+Full tx map + dual-path docs: [`docs/ONCHAIN.md`](./docs/ONCHAIN.md).
+
+Registration files (HTTPS / Pages):
+
+- [`docs/agents/good-bot.json`](./docs/agents/good-bot.json)
+- [`docs/agents/fake-bot.json`](./docs/agents/fake-bot.json)
+- [`docs/agents/sybil-bot.json`](./docs/agents/sybil-bot.json)
+- [`docs/registration-v1.json`](./docs/registration-v1.json)
 
 ---
 
-## Demo (submission-ready)
+## Metropolis paste-ready
+
+| Field | Value |
+|-------|-------|
+| **Repo** | `https://github.com/JimmyWangJimmy/AgentID` |
+| **Demo** | `https://jimmywangjimmy.github.io/AgentID/` |
+| **Video** | `https://jimmywangjimmy.github.io/AgentID/AgentID-demo-1min.mp4` (HTML demo is primary) |
+| **Contract** | `0x8916357EDB7598d20E257404213CF3D1C099c310` |
+
+---
+
+## Demo
 
 | Asset | Link |
 |-------|------|
-| **Interactive HTML** (primary) | [`docs/demo.html`](./docs/demo.html) · [GitHub Pages](https://jimmywangjimmy.github.io/AgentID/) |
-| **1-min MP4** | [`docs/AgentID-demo-1min.mp4`](./docs/AgentID-demo-1min.mp4) · [raw](https://raw.githubusercontent.com/JimmyWangJimmy/AgentID/main/docs/AgentID-demo-1min.mp4) |
-| Recording notes | [`DEMO.md`](./DEMO.md) |
+| **Interactive HTML** (primary) | [GitHub Pages](https://jimmywangjimmy.github.io/AgentID/) · [`docs/demo.html`](./docs/demo.html) |
+| MP4 | [`docs/AgentID-demo-1min.mp4`](./docs/AgentID-demo-1min.mp4) — regenerate optional; HTML tells the raw-vs-weighted story |
 
 ```bash
 cd AgentID
 npm install
-npm test          # vitest — sybil-lite + average + good-vs-fake
-npm run demo      # GoodBot vs FakeBot CLI walkthrough
+npm test          # vitest — raw + weighted + sybil ring
+npm run demo      # CLI walkthrough
+forge test -vv    # Solidity mirror
 open docs/demo.html
 ```
 
@@ -79,29 +84,18 @@ open docs/demo.html
 ## Architecture
 
 ```
-┌─────────────┐     registerAgent(uri)      ┌──────────────────────┐
-│  Agent /    │ ───────────────────────────► │  AgentID Registry    │
-│  Owner      │                              │  (Monad / mock)       │
-│  Wallet     │     attest(id, score, …)     │                      │
-│             │ ───────────────────────────► │  • no self-attest    │
-└─────────────┘                              │  • 1 vote / attester │
-                                             │  • average ×100      │
-┌─────────────┐     getReputation(id)        └──────────────────────┘
-│  Consumer / │ ◄───────────────────────────         │
-│  Another    │   avg×100 + count + unique           ▼
-│  Agent      │                              Explorer / HTML / CLI
-└─────────────┘
+ ERC-8004 Identity (official)          AgentID scorer (this repo)
+ ┌─────────────────────────┐           ┌──────────────────────────────┐
+ │ register(agentURI) NFT  │  dual-    │ registerAgent / attest       │
+ │ agentId 2204/2205/2206  │  path     │ getReputation (raw avg)      │
+ │ registration-v1 JSON    │◄─────────►│ getWeightedReputation        │
+ └─────────────────────────┘           │   EigenTrust-lite one-hop    │
+                                       └──────────────────────────────┘
 ```
 
-## On-chain path (Foundry)
+Weight policy: seed/oracle weight (cap 500) → else max(BASE=10, unweighted avg×100 of attester’s owned agent) → else BASE. **Not** recursive weighted (classic EigenTrust-lite).
 
-```bash
-forge test -vv
-# deploy + seed: see docs/ONCHAIN.md
-```
-
-- `contracts/IAgentRegistry.sol` / `AgentRegistry.sol`
-- `script/Deploy.s.sol` · `script/Seed.s.sol` (GoodBot vs FakeBot)
+---
 
 ## Repo layout
 
@@ -110,32 +104,18 @@ AgentID/
   README.md · DEMO.md
   src/registry.ts · src/cli-demo.ts
   test/registry.test.ts
-  contracts/                   # Solidity + forge tests
-  script/Deploy.s.sol · Seed.s.sol
-  docs/demo.html · index.html · ONCHAIN.md · RESEARCH.md · AgentID-demo-1min.mp4
+  contracts/AgentRegistry.sol · IAgentRegistry.sol · *.t.sol
+  script/Deploy.s.sol · Seed.s.sol · Register8004.s.sol
+  docs/demo.html · ONCHAIN.md · RESEARCH.md · agents/*.json
 ```
 
-## Docs
-
-| Doc | Purpose |
-|-----|---------|
-| [`docs/RESEARCH.md`](./docs/RESEARCH.md) | Deep research: ERC-8004, papers, peers, P0/P1/P2 upgrades |
-| [`docs/ONCHAIN.md`](./docs/ONCHAIN.md) | Deploy + seed notes |
-| [`docs/metropolis-brief.md`](./docs/metropolis-brief.md) | Original Metropolis brief |
-
 ---
-
-## License
-
-MIT
 
 ## Author
 
-**Jimmy Wang** — Tsinghua University (CS + Linguistics, MSc) · Shenzhen · building AI agents  
-Metropolis · Trust / Identity & AI Infrastructure · solo
+**Jimmy Wang** — Tsinghua University (CS + Linguistics, MSc) · Shenzhen · AI agents  
+Metropolis · Trust / Identity & AI Infrastructure · solo · MIT
 
 ---
 
-*Shippable foundation with a clear differentiator: sybil-lite average reputation + live good-vs-fake proof.*
-
-<!-- 中文摘要：AgentID 在 Monad 上提供 sybil-lite 的 Agent 身份与平均信誉：禁止自证、一票一地址、平均分×100。链上已播种 GoodBot vs FakeBot。赛道 Trust/Identity。Jimmy Wang。 -->
+<!-- 中文：AgentID 是 Monad 上面向 ERC-8004 的反女巫信誉聚合器：原始均分 vs EigenTrust-lite 加权；链上 SybilRing 原始 4.00、加权 1.22。 -->

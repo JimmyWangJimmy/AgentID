@@ -1,0 +1,36 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "AgentID Demo Suite",
+  "description": "ERC-8004 gives public feedback; AgentID is the anti-Sybil aggregator on Monad. GoodBot / FakeBot / SybilBot registration cards.",
+  "image": "https://jimmywangjimmy.github.io/AgentID/",
+  "services": [
+    {
+      "name": "web",
+      "endpoint": "https://jimmywangjimmy.github.io/AgentID/"
+    }
+  ],
+  "x402Support": false,
+  "active": true,
+  "registrations": [
+    {
+      "agentId": 1,
+      "agentRegistry": "eip155:10143:0x8916357EDB7598d20E257404213CF3D1C099c310"
+    }
+  ],
+  "supportedTrust": [
+    "reputation"
+  ],
+  "agents": [
+    "https://jimmywangjimmy.github.io/AgentID/agents/good-bot.json",
+    "https://jimmywangjimmy.github.io/AgentID/agents/fake-bot.json",
+    "https://jimmywangjimmy.github.io/AgentID/agents/sybil-bot.json"
+  ],
+  "official8004": {
+    "identity": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+    "reputation": "0x8004B663056A597Dffe9eCcC1965A193B7388713",
+    "validation": "0x8004Cb1BF31DAf7788923b405b754f57acEB4272",
+    "goodBotOfficialAgentId": 2204,
+    "fakeBotOfficialAgentId": 2205,
+    "sybilBotOfficialAgentId": 2206
+  }
+}

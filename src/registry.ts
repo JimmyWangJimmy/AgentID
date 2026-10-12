@@ -2,15 +2,12 @@
  * AgentID — in-memory Agent Registry (mock of on-chain IAgentRegistry).
  *
  * Reputation policy (same as Solidity AgentRegistry):
- * - Attestation score must be an integer in [1, 5].
- * - No self-attest: attester cannot be the agent owner.
- * - One vote per attester: a second attest from the same address overwrites.
- * - getReputation → averageScoreX100 (e.g. 4.5 → 450), count, uniqueAttesters.
+ * - Score integer in [1, 5]; no self-attest; one vote per attester (overwrite).
+ * - getReputation → unweighted average ×100 (baseline).
+ * - getWeightedReputation → EigenTrust-lite one-hop: weight from seed set or
+ *   attester's owned agent's unweighted avg; else BASE_WEIGHT.
  *
- * Suggested tags: reliable, helpful, on-time, spam, impersonation.
- *
- * Addresses are opaque strings (wallet hex or labels) so the CLI demo
- * works without a real chain.
+ * Narrative: ERC-8004 publishes feedback; AgentID decides whom to believe.
  */
 
 export type Address = string;
@@ -38,26 +35,58 @@ export interface Reputation {
   metadataURI: string;
 }
 
+export interface WeightedReputation {
+  weightedAvgX100: number;
+  count: number;
+  uniqueAttesters: number;
+  owner: Address;
+  metadataURI: string;
+}
+
 export const SCORE_MIN = 1;
 export const SCORE_MAX = 5;
+export const BASE_WEIGHT = 10;
+export const MAX_WEIGHT = 500;
+export const ORACLE_SEED_WEIGHT = 500;
 
-/** Story tags used in GoodBot vs FakeBot seed / demo. */
 export const TAGS = {
   reliable: "reliable",
   helpful: "helpful",
   onTime: "on-time",
   spam: "spam",
   impersonation: "impersonation",
+  sybilRing: "sybil-ring",
 } as const;
 
 export class AgentRegistry {
   private nextId = 1;
   private agents = new Map<number, Agent>();
   private attestations = new Map<number, Attestation[]>();
-  /** agentId → attester → index in attestations array */
   private attesterIndex = new Map<number, Map<string, number>>();
+  private agentOfOwnerMap = new Map<string, number>();
+  private seedWeights = new Map<string, number>();
+  readonly oracle: Address;
 
-  /** Register a new agent bound to `owner`. Returns agentId. */
+  constructor(oracle: Address = "0xOracle") {
+    this.oracle = oracle.trim();
+    this.seedWeights.set(this.oracle, ORACLE_SEED_WEIGHT);
+  }
+
+  setSeedWeight(caller: Address, who: Address, weight: number): void {
+    if (caller.trim() !== this.oracle) {
+      throw new Error("only oracle");
+    }
+    if (!who || !who.trim()) throw new Error("zero address");
+    if (!Number.isInteger(weight) || weight < 0 || weight > MAX_WEIGHT) {
+      throw new Error("weight cap");
+    }
+    this.seedWeights.set(who.trim(), weight);
+  }
+
+  seedWeight(who: Address): number {
+    return this.seedWeights.get(who.trim()) ?? 0;
+  }
+
   registerAgent(owner: Address, metadataURI: string): number {
     if (!owner || !owner.trim()) {
       throw new Error("owner address required");
@@ -66,13 +95,15 @@ export class AgentRegistry {
       throw new Error("metadataURI required");
     }
     const agentId = this.nextId++;
+    const o = owner.trim();
     this.agents.set(agentId, {
-      owner: owner.trim(),
+      owner: o,
       metadataURI: metadataURI.trim(),
       createdAt: Date.now(),
     });
     this.attestations.set(agentId, []);
     this.attesterIndex.set(agentId, new Map());
+    this.agentOfOwnerMap.set(o, agentId);
     return agentId;
   }
 
@@ -88,15 +119,14 @@ export class AgentRegistry {
     return this.agents.size;
   }
 
+  agentOfOwner(owner: Address): number {
+    return this.agentOfOwnerMap.get(owner.trim()) ?? 0;
+  }
+
   getAgent(agentId: number): Agent {
     return { ...this.requireAgent(agentId) };
   }
 
-  /**
-   * Post or replace an attestation from `attester`.
-   * Score must be integer in [SCORE_MIN, SCORE_MAX] (1–5).
-   * Rejects self-attest; one vote per attester (overwrite).
-   */
   attest(
     attester: Address,
     agentId: number,
@@ -157,32 +187,70 @@ export class AgentRegistry {
     return { ...list[index] };
   }
 
-  /**
-   * Portable reputation: average ×100 + count + unique attesters + identity.
-   * averageScoreX100 uses integer division (same as Solidity).
-   */
   getReputation(agentId: number): Reputation {
+    const agent = this.requireAgent(agentId);
+    const { averageScoreX100, count } = this.unweighted(agentId);
+    return {
+      averageScoreX100,
+      count,
+      uniqueAttesters: count,
+      owner: agent.owner,
+      metadataURI: agent.metadataURI,
+    };
+  }
+
+  getWeightedReputation(agentId: number): WeightedReputation {
     const agent = this.requireAgent(agentId);
     const list = this.attestations.get(agentId)!;
     const count = list.length;
     if (count === 0) {
       return {
-        averageScoreX100: 0,
+        weightedAvgX100: 0,
         count: 0,
         uniqueAttesters: 0,
         owner: agent.owner,
         metadataURI: agent.metadataURI,
       };
     }
-    const sum = list.reduce((s, a) => s + a.score, 0);
-    const averageScoreX100 = Math.trunc((sum * 100) / count);
+    let weightedSum = 0;
+    let weightSum = 0;
+    for (const a of list) {
+      const w = this.attesterWeight(a.attester);
+      weightedSum += w * a.score;
+      weightSum += w;
+    }
+    const weightedAvgX100 = Math.trunc((weightedSum * 100) / weightSum);
     return {
-      averageScoreX100,
+      weightedAvgX100,
       count,
-      uniqueAttesters: count, // one vote per attester
+      uniqueAttesters: count,
       owner: agent.owner,
       metadataURI: agent.metadataURI,
     };
+  }
+
+  attesterWeight(who: Address): number {
+    const w = who.trim();
+    const seeded = this.seedWeights.get(w) ?? 0;
+    if (seeded > 0) {
+      return Math.min(seeded, MAX_WEIGHT);
+    }
+    const owned = this.agentOfOwnerMap.get(w) ?? 0;
+    if (owned === 0) return BASE_WEIGHT;
+    const { averageScoreX100, count } = this.unweighted(owned);
+    if (count === 0 || averageScoreX100 <= 0) return BASE_WEIGHT;
+    return Math.min(MAX_WEIGHT, Math.max(BASE_WEIGHT, averageScoreX100));
+  }
+
+  private unweighted(agentId: number): {
+    averageScoreX100: number;
+    count: number;
+  } {
+    const list = this.attestations.get(agentId)!;
+    const count = list.length;
+    if (count === 0) return { averageScoreX100: 0, count: 0 };
+    const sum = list.reduce((s, a) => s + a.score, 0);
+    return { averageScoreX100: Math.trunc((sum * 100) / count), count };
   }
 
   private requireAgent(agentId: number): Agent {

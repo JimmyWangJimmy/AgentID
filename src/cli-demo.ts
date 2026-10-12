@@ -1,17 +1,20 @@
 /**
- * AgentID CLI demo — GoodBot vs FakeBot (sybil-lite reputation)
- * Screen-recording friendly: large clear sections, labeled mock.
- *
+ * AgentID CLI demo — GoodBot / FakeBot / SybilRing (EigenTrust-lite)
  * Run: npm run demo
  */
 
 import { AgentRegistry, TAGS } from "./registry.js";
 
-const GOOD_OWNER = "0xGoodOwner1111111111111111111111111111111";
-const FAKE_OWNER = "0xFakeOwner2222222222222222222222222222222";
-const A1 = "0xAttesterA33333333333333333333333333333333";
-const A2 = "0xAttesterB44444444444444444444444444444444";
-const A3 = "0xAttesterC55555555555555555555555555555555";
+const ORACLE = "0xOracle";
+const GOOD_OWNER = "0xGoodOwner";
+const FAKE_OWNER = "0xFakeOwner";
+const SYBIL_OWNER = "0xSybilOwner";
+const A1 = "0xAttesterA";
+const A2 = "0xAttesterB";
+const A3 = "0xAttesterC";
+const P1 = "0xPuppet1";
+const P2 = "0xPuppet2";
+const P3 = "0xPuppet3";
 
 function banner(title: string) {
   console.log("");
@@ -25,53 +28,53 @@ function fmtAvg(x100: number): string {
 }
 
 function main() {
-  banner("AgentID — Sybil-lite reputation (in-memory mock)");
-  console.log("  Track: Trust / Identity & AI Infrastructure (Monad Metropolis)");
-  console.log("  Rules: No self-attest · One vote / attester · Average (not spam-sum)");
-  console.log("  Author: Jimmy Wang");
+  banner("AgentID — anti-Sybil aggregator for ERC-8004 (mock)");
+  console.log("  ERC-8004 publishes feedback; AgentID decides whom to believe.");
+  console.log("  Rules: no self-attest · one vote · raw avg + EigenTrust-lite weighted");
 
-  const registry = new AgentRegistry();
+  const registry = new AgentRegistry(ORACLE);
+  registry.setSeedWeight(ORACLE, A1, 500);
+  registry.setSeedWeight(ORACLE, A2, 400);
+  registry.setSeedWeight(ORACLE, A3, 400);
 
-  banner("1) Register two agents that both claim to be helpful");
-  const goodId = registry.registerAgent(GOOD_OWNER, "ipfs://agentid/good-bot");
-  const fakeId = registry.registerAgent(FAKE_OWNER, "ipfs://agentid/fake-bot");
-  console.log(`  GoodBot agentId: ${goodId}  uri: ipfs://agentid/good-bot`);
-  console.log(`  FakeBot agentId: ${fakeId}  uri: ipfs://agentid/fake-bot`);
+  banner("1) Register GoodBot / FakeBot / SybilBot");
+  const goodId = registry.registerAgent(GOOD_OWNER, "https://…/good-bot.json");
+  const fakeId = registry.registerAgent(FAKE_OWNER, "https://…/fake-bot.json");
+  const sybilId = registry.registerAgent(SYBIL_OWNER, "https://…/sybil-bot.json");
+  console.log(`  GoodBot #${goodId}  FakeBot #${fakeId}  SybilBot #${sybilId}`);
 
-  banner("2) Attest — three peers for GoodBot (5 / 5 / 4)");
+  banner("2) GoodBot — high scores from seeded reviewers");
   registry.attest(A1, goodId, 5, TAGS.reliable, "ipfs://g1");
   registry.attest(A2, goodId, 5, TAGS.helpful, "ipfs://g2");
   registry.attest(A3, goodId, 4, TAGS.onTime, "ipfs://g3");
-  console.log(`  tags: reliable, helpful, on-time`);
 
-  banner("3) Attest — two peers for FakeBot (1 / 2)");
+  banner("3) FakeBot — honestly toxic");
   registry.attest(A1, fakeId, 1, TAGS.spam, "ipfs://f1");
   registry.attest(A2, fakeId, 2, TAGS.impersonation, "ipfs://f2");
-  console.log(`  tags: spam, impersonation`);
 
-  banner("4) getReputation — portable average (×100)");
-  const good = registry.getReputation(goodId);
-  const fake = registry.getReputation(fakeId);
-  console.log(
-    `  GoodBot  avg=${fmtAvg(good.averageScoreX100)}  count=${good.count}  unique=${good.uniqueAttesters}`
-  );
-  console.log(
-    `  FakeBot  avg=${fmtAvg(fake.averageScoreX100)}  count=${fake.count}  unique=${fake.uniqueAttesters}`
-  );
-  console.log(
-    `  → GoodBot clearly beats FakeBot (${good.averageScoreX100} > ${fake.averageScoreX100})`
-  );
+  banner("4) SybilBot — sockpuppet ring (fresh wallets × 5★) + seed flag");
+  registry.registerAgent(P1, "ipfs://puppet-1");
+  registry.registerAgent(P2, "ipfs://puppet-2");
+  registry.registerAgent(P3, "ipfs://puppet-3");
+  registry.attest(P1, sybilId, 5, TAGS.reliable, "ipfs://s1");
+  registry.attest(P2, sybilId, 5, TAGS.helpful, "ipfs://s2");
+  registry.attest(P3, sybilId, 5, TAGS.onTime, "ipfs://s3");
+  registry.attest(A1, sybilId, 1, TAGS.sybilRing, "ipfs://s-flag");
 
-  banner("5) Sybil-lite check — same attester cannot spam-sum");
-  registry.attest(A1, goodId, 5, TAGS.reliable, "ipfs://g1-again");
-  const after = registry.getReputation(goodId);
-  console.log(
-    `  re-attest from A1 → still count=${after.count} (overwrite, not +1)`
-  );
-
-  banner("Done — portable trust that resists self-boost and vote spam");
-  console.log("  Solidity: contracts/AgentRegistry.sol");
-  console.log("");
+  banner("5) Raw vs Weighted");
+  for (const [label, id] of [
+    ["GoodBot", goodId],
+    ["FakeBot", fakeId],
+    ["SybilBot", sybilId],
+  ] as const) {
+    const raw = registry.getReputation(id);
+    const w = registry.getWeightedReputation(id);
+    console.log(
+      `  ${label.padEnd(9)} raw=${fmtAvg(raw.averageScoreX100)}  weighted=${fmtAvg(w.weightedAvgX100)}  count=${raw.count}`
+    );
+  }
+  console.log("  → SybilBot fools raw average; weighted trust collapses.");
+  banner("Done");
 }
 
 main();
