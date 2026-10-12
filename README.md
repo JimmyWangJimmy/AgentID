@@ -112,8 +112,18 @@ AgentID/
   test/registry.test.ts
   contracts/                   # Solidity + forge tests
   script/Deploy.s.sol · Seed.s.sol
-  docs/demo.html · index.html · ONCHAIN.md · AgentID-demo-1min.mp4
+  docs/demo.html · index.html · ONCHAIN.md · RESEARCH.md · AgentID-demo-1min.mp4
 ```
+
+## Docs
+
+| Doc | Purpose |
+|-----|---------|
+| [`docs/RESEARCH.md`](./docs/RESEARCH.md) | Deep research: ERC-8004, papers, peers, P0/P1/P2 upgrades |
+| [`docs/ONCHAIN.md`](./docs/ONCHAIN.md) | Deploy + seed notes |
+| [`docs/metropolis-brief.md`](./docs/metropolis-brief.md) | Original Metropolis brief |
+
+---
 
 ## License
 
