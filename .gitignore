@@ -13,3 +13,4 @@ broadcast/**/*.recovery.json
 
 docs/frames/
 *.recovery.lock
+_preview-*.png

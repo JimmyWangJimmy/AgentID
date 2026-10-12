@@ -82,7 +82,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* HERO LINE */
 .hero-line {
-  text-align: center; padding: 4px 0 14px;
+  text-align: center; padding: 2px 0 8px;
 }
 .hero-line h1 {
   font-size: clamp(18px, 2.6vw, 26px); font-weight: 800; letter-spacing: -.03em; line-height: 1.25;
@@ -94,7 +94,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 /* MODE TOGGLE */
 .mode-bar {
   display: flex; align-items: center; justify-content: center; gap: 14px;
-  margin-bottom: 16px; flex-wrap: wrap;
+  margin-bottom: 10px; flex-wrap: wrap;
 }
 .toggle {
   display: inline-flex; padding: 4px; border-radius: 999px;
@@ -127,7 +127,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 18px;
-  min-height: min(62vh, 560px);
+  min-height: min(58vh, 520px);
   margin-bottom: 18px;
 }
 @media (max-width: 900px) {
@@ -176,7 +176,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 6px; text-align: center;
   transition: border-color .4s, background .4s, box-shadow .5s, transform .4s;
-  min-height: 220px;
+  min-height: 250px;
 }
 .agent .name {
   font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
@@ -198,15 +198,20 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 .agent .delta.show { opacity: 1; }
 .agent .gauge-wrap {
-  width: 100%; height: 10px; margin-top: 10px;
-  background: rgba(255,255,255,.06); border-radius: 999px; overflow: hidden;
-  position: relative;
+  width: 88px; height: 88px; margin-top: 6px; position: relative;
 }
-.agent .gauge-fill {
-  height: 100%; border-radius: 999px;
-  width: 0%;
-  transition: width .55s cubic-bezier(.4,0,.2,1), background .4s;
+.agent .gauge-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.agent .gauge-wrap .track { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 8; }
+.agent .gauge-wrap .fill {
+  fill: none; stroke-width: 8; stroke-linecap: round;
+  stroke-dasharray: 201; stroke-dashoffset: 201;
+  transition: stroke-dashoffset .6s cubic-bezier(.4,0,.2,1), stroke .4s;
+  filter: drop-shadow(0 0 6px currentColor);
 }
+.agent.good .gauge-wrap .fill { stroke: var(--green); color: var(--green); }
+.agent.fake .gauge-wrap .fill { stroke: var(--amber); color: var(--amber); }
+.agent.sybil .gauge-wrap .fill { stroke: var(--pink); color: var(--pink); }
+.agent.sybil.exposed .gauge-wrap .fill { stroke: var(--red); color: var(--red); }
 .agent .badge-state {
   position: absolute; top: 10px; right: 10px;
   font-size: 9px; font-weight: 800; letter-spacing: .08em;
@@ -235,8 +240,8 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   box-shadow: 0 0 48px rgba(255,92,122,.22), inset 0 0 40px rgba(255,92,122,.06);
 }
 .agent.sybil.exposed .score {
-  color: var(--red);
-  text-shadow: 0 0 50px rgba(255,92,122,.55);
+  color: var(--red) !important;
+  text-shadow: 0 0 60px rgba(255,92,122,.7), 0 0 12px rgba(255,92,122,.5);
   animation: shake .45s ease;
 }
 .agent.sybil.exposed .gauge-fill { background: linear-gradient(90deg, #be123c, var(--red)); }
@@ -290,12 +295,12 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   background: linear-gradient(180deg, rgba(16,18,28,.85), rgba(10,12,20,.9));
   border: 1px solid var(--border);
   border-radius: 18px;
-  padding: 18px 22px;
-  margin-bottom: 18px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
 }
 .delta-strip h3 {
   font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--dim); margin-bottom: 14px;
+  color: var(--dim); margin-bottom: 10px;
 }
 .deltas { display: grid; gap: 12px; }
 .delta-row {
@@ -303,7 +308,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 .delta-row .lbl { font-size: 13px; font-weight: 700; }
 .delta-row .track {
-  position: relative; height: 28px;
+  position: relative; height: 36px;
   background: rgba(255,255,255,.03); border-radius: 8px; overflow: hidden;
 }
 .delta-row .zero {
@@ -324,7 +329,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .delta-row.good .lbl { color: var(--green); }
 .delta-row.fake .lbl { color: var(--amber); }
 .delta-row.sybil .lbl { color: var(--pink); }
-.delta-row.sybil.exposed .lbl { color: var(--red); }
+.delta-row.sybil.exposed .lbl { color: var(--red); font-size: 14px; }
 
 /* PROOF STRIP */
 .proof {
@@ -402,7 +407,12 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
           <div class="id mono">#1 · 8004 #2204</div>
           <div class="score mono" id="score-good">4.66</div>
           <div class="delta mono" id="delta-good"></div>
-          <div class="gauge-wrap"><div class="gauge-fill" id="gauge-good"></div></div>
+          <div class="gauge-wrap" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <circle class="track" cx="40" cy="40" r="32"></circle>
+              <circle class="fill" id="gauge-good" cx="40" cy="40" r="32"></circle>
+            </svg>
+          </div>
         </div>
         <div class="agent fake" id="card-fake">
           <span class="badge-state" id="badge-fake">TOXIC</span>
@@ -410,7 +420,12 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
           <div class="id mono">#2 · 8004 #2205</div>
           <div class="score mono" id="score-fake">1.50</div>
           <div class="delta mono" id="delta-fake"></div>
-          <div class="gauge-wrap"><div class="gauge-fill" id="gauge-fake"></div></div>
+          <div class="gauge-wrap" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <circle class="track" cx="40" cy="40" r="32"></circle>
+              <circle class="fill" id="gauge-fake" cx="40" cy="40" r="32"></circle>
+            </svg>
+          </div>
         </div>
         <div class="agent sybil" id="card-sybil">
           <span class="badge-state" id="badge-sybil">EXPOSED</span>
@@ -418,7 +433,12 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
           <div class="id mono">#3 · 8004 #2206</div>
           <div class="score mono" id="score-sybil">4.00</div>
           <div class="delta mono" id="delta-sybil"></div>
-          <div class="gauge-wrap"><div class="gauge-fill" id="gauge-sybil"></div></div>
+          <div class="gauge-wrap" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <circle class="track" cx="40" cy="40" r="32"></circle>
+              <circle class="fill" id="gauge-sybil" cx="40" cy="40" r="32"></circle>
+            </svg>
+          </div>
         </div>
       </div>
       <div class="caption-row">
@@ -546,7 +566,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
       const to = next === "raw" ? scores[a].raw : scores[a].w;
       const ms = opts.instant || reduceMotion ? 0 : 600;
       animateNumber($("score-" + a), from, to, ms);
-      $("gauge-" + a).style.width = clamp((to / 500) * 100, 0, 100) + "%";
+      (function(el, to){ var circ=201; el.style.strokeDasharray=String(circ); var pct=clamp(to/500,0,1); el.style.strokeDashoffset = String(circ*(1-pct)); })($("gauge-" + a), to);
     });
 
     const sybilCard = $("card-sybil");
@@ -883,7 +903,9 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   initGraph();
   paintDeltas(false);
   ["good", "fake", "sybil"].forEach((a) => {
-    $("gauge-" + a).style.width = clamp((scores[a].raw / 500) * 100, 0, 100) + "%";
+    var el=$("gauge-"+a), circ=201, pct=clamp(scores[a].raw/500,0,1);
+    el.style.strokeDasharray = String(circ);
+    el.style.strokeDashoffset = String(circ*(1-pct));
   });
   requestAnimationFrame(tickGraph);
 
