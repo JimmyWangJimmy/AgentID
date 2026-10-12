@@ -1,0 +1,8 @@
+# Optional — Foundry not required for the primary TypeScript demo.
+# When forge is installed: forge test
+[profile.default]
+src = "contracts"
+test = "contracts"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.20"

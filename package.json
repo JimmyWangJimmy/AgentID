@@ -1,0 +1,21 @@
+{
+  "name": "agentid",
+  "version": "0.1.0",
+  "description": "On-chain Agent Identity & Reputation Registry on Monad (ERC-8004-inspired)",
+  "type": "module",
+  "license": "MIT",
+  "author": "Jimmy Wang",
+  "scripts": {
+    "demo": "tsx src/cli-demo.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
