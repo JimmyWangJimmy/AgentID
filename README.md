@@ -71,6 +71,27 @@ Expected demo shape:
 
 Screen-recording tips: see [`DEMO.md`](./DEMO.md).
 
+## Demo (submission-ready)
+
+Interactive ~60s walkthrough of **register → attest → getReputation** (MOCK registry, no chain deploy):
+
+| Asset | Link |
+|-------|------|
+| **Interactive HTML** | [`docs/demo.html`](./docs/demo.html) · [GitHub Pages](https://jimmywangjimmy.github.io/AgentID/) |
+| **1-min MP4** (1280×720) | [`docs/AgentID-demo-1min.mp4`](./docs/AgentID-demo-1min.mp4) · [raw download](https://raw.githubusercontent.com/JimmyWangJimmy/AgentID/main/docs/AgentID-demo-1min.mp4) |
+| Recording notes | [`DEMO.md`](./DEMO.md) |
+
+```bash
+# local HTML
+open docs/demo.html   # or: python3 -m http.server -d docs 8080
+
+# same flow in terminal
+npm run demo
+```
+
+On-screen cues: `agentId: 1` → attest `score: 5` / `tag: reliable` → `getReputation` `score: 5` / `count: 1`. Clearly labeled **MOCK**.
+
+---
 ## Solidity (optional / secondary)
 
 Interfaces and a minimal implementation live under `contracts/`:
@@ -102,11 +123,15 @@ AgentID/
   CLAUDE.md
   LICENSE
   package.json
-  src/registry.ts       # in-memory registry
-  src/cli-demo.ts       # npm run demo
+  src/registry.ts              # in-memory registry
+  src/cli-demo.ts              # npm run demo
   test/registry.test.ts
-  contracts/            # Solidity interface + impl + forge tests
-  docs/metropolis-brief.md
+  contracts/                   # Solidity interface + impl + forge tests
+  docs/
+    demo.html / index.html     # interactive ~60s autoplay demo
+    AgentID-demo-1min.mp4      # 1280×720 submission video
+    metropolis-brief.md
+    generate_demo_video.py     # rebuild MP4 from frames
 ```
 
 ## License
