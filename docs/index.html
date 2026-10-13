@@ -705,7 +705,10 @@ async function liveScores() {
 paintScores();
 liveScores();
 layoutRing();
-runJudge(0);
+const sp=new URLSearchParams(location.search);
+const sc=sp.get('scene');
+if(sc!==null){stopJudge();setBeat(Math.min(4,Math.max(0,Number(sc))));}
+else runJudge(0);
 </script>
 
 </body>
