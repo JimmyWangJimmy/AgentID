@@ -1,22 +1,8 @@
-AgentID Metropolis submission paste pack
-Updated: 2026-10-13 Asia/Shanghai
-Deadline: 2026-10-13 23:59 ET = 2026-10-14 11:59 Asia/Shanghai
-Portal: https://hackathon.monad.xyz
-Account hint (from prior notes): jimmywang
-
-Track: Trust / Identity & AI Infrastructure
-
-Title:
-AgentID — Anti-Sybil Aggregator for ERC-8004 on Monad
-
-Tagline:
-ERC-8004 publishes feedback. AgentID decides whom to believe.
-
-Description:
-AI agents move across apps and chains with no shared trust layer. ERC-8004 publishes feedback; AgentID decides whom to believe. On Monad testnet we ship an EigenTrust-lite weighted scorer and a live Sybil-ring demo: SybilBot looks like 4.00 on raw average and collapses to 1.22 when trust weights apply, while GoodBot stays high. Dual-path to the official IdentityRegistry (agent ids 2204 / 2205 / 2206). Public demo, contracts, and tests in the repo. Solo build by Jimmy Wang for the Trust / Identity & AI Infrastructure track.
-
+AgentID — Metropolis paste
 Repo: https://github.com/JimmyWangJimmy/AgentID
 Demo: https://jimmywangjimmy.github.io/AgentID/
 Video: https://jimmywangjimmy.github.io/AgentID/AgentID-demo-1min.mp4
-Contract (Monad testnet): 0x8916357EDB7598d20E257404213CF3D1C099c310
-Explorer: https://testnet.monadvision.com/address/0x8916357EDB7598d20E257404213CF3D1C099c310
+Contract (AgentID scorer): 0x8916357EDB7598d20E257404213CF3D1C099c310
+ERC-8004 Identity: 0x8004A818BFB912233c491871b3d84c89A494BD9e (agents 2204/2205/2206)
+ERC-8004 Reputation: 0x8004B663056A597Dffe9eCcC1965A193B7388713
+Judge Mode: open Demo → leave Judge Mode on (~60s autopilot)

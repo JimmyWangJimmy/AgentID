@@ -1,4 +1,4 @@
-# AgentID — On-chain deploy (Monad testnet) · v3 EigenTrust-lite
+# AgentID — On-chain deploy (Monad testnet) · v4 · 8004 feedback + EigenTrust-lite
 
 ## Narrative
 
@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **Status** | Deployed + seeded (GoodBot / FakeBot / SybilBot) + dual-path official ERC-8004 Identity |
+| **Status** | Deployed + seeded + official Identity **and** Reputation `giveFeedback` (v4) |
 | **Network** | Monad Testnet · chain id `10143` |
 | **RPC** | `https://testnet-rpc.monad.xyz` |
 | **AgentID scorer** | [`0x8916357EDB7598d20E257404213CF3D1C099c310`](https://testnet.monadvision.com/address/0x8916357EDB7598d20E257404213CF3D1C099c310) |
@@ -125,7 +125,44 @@ interface IERC8004Identity {
 
 Reference: [EIP-8004](https://eips.ethereum.org/EIPS/eip-8004) · [erc-8004-contracts](https://github.com/erc-8004/erc-8004-contracts).
 
-**Skipped / deferred:** writing feedback into official ReputationRegistry `0x8004B663…` this week (AgentID already demonstrates the aggregation gap ERC-8004 leaves open). Validation Registry skipped (spec unstable).
+### Official ReputationRegistry feedback (v4) — LIVE
+
+AgentID is the aggregator lens. The same seed story is now written as `giveFeedback` on the official registry:
+
+| Registry | Address |
+|----------|---------|
+| Reputation | [`0x8004B663056A597Dffe9eCcC1965A193B7388713`](https://testnet.monadvision.com/address/0x8004B663056A597Dffe9eCcC1965A193B7388713) |
+
+| Agent | Official id | Clients | `getSummary` (stars, decimals=0) |
+|-------|-------------|---------|----------------------------------|
+| GoodBot | 2204 | 3 | count 3–4 · summary ≈ **4** |
+| FakeBot | 2205 | 2 | count 2 · summary ≈ **1** |
+| SybilBot | 2206 | 4 | count 4 · summary ≈ **4** (raw still looks fine!) |
+
+Feedback txs:
+
+| Agent | Note | Tx |
+|-------|------|----|
+| GoodBot #2204 | A1 reliable 5 | [`0x44b7205d…ea8c`](https://testnet.monadvision.com/tx/0x44b7205dd287b3b99c7d2ff7f10d13d6385a2f6d5fc706bb7ecc3b821d73ea8c) |
+| GoodBot #2204 | A2 helpful 5 | [`0xd54a3151…fe09`](https://testnet.monadvision.com/tx/0xd54a3151027040b87aea9a242b5ca3a5bdd1f2d88d90cca705c5deea10b6fe09) |
+| GoodBot #2204 | A3 on-time 4 | [`0x5d39ce68…6cbd`](https://testnet.monadvision.com/tx/0x5d39ce688896ed0f258d1c3a173ddb505983906d3258db13c02908ee30336cbd) |
+| FakeBot #2205 | A1 spam 1 | [`0xc38cf6ba…0b8e`](https://testnet.monadvision.com/tx/0xc38cf6baac88a077cfd4e62f746ba0ba6a97b7c9059145cfc13d5209e0d00b8e) |
+| FakeBot #2205 | A2 impersonation 2 | [`0x4d5688da…0798`](https://testnet.monadvision.com/tx/0x4d5688da8925fdce79bc62cc48cf367a40784b9a6ce62a5b9ab574ab00ad0798) |
+| SybilBot #2206 | P1 reliable 5 | [`0x2006d74e…34d3`](https://testnet.monadvision.com/tx/0x2006d74e3ce2ecb8ae01b2763b773e0f0caca672ff072c160769f4a5a10234d3) |
+| SybilBot #2206 | P2 helpful 5 | [`0x440422b1…d8f9`](https://testnet.monadvision.com/tx/0x440422b1e719e9ebbf16b0a720d1c0def7f5a1ccd5986a1b79443c551ffdd8f9) |
+| SybilBot #2206 | P3 on-time 5 | [`0x03032eab…a563`](https://testnet.monadvision.com/tx/0x03032eabea565804e068726b6835ec79af9329108c7aee33ca9a5d8d56f7a563) |
+| SybilBot #2206 | A1 sybil-ring 1 | [`0x4e3126da…eb86`](https://testnet.monadvision.com/tx/0x4e3126da432a0e2450b07407b42797e96b4d296afa8760e6f7c9c03bb455eb86) |
+
+```bash
+REP=0x8004B663056A597Dffe9eCcC1965A193B7388713
+RPC=https://testnet-rpc.monad.xyz
+cast call $REP "getClients(uint256)(address[])" 2206 --rpc-url $RPC
+```
+
+Adapter notes: [`ADAPTER.md`](./ADAPTER.md). Script: `script/Feedback8004.s.sol`.
+
+**Deferred:** Validation Registry (spec unstable). Attester bonds. Full log→score mirror indexer.
+
 
 ### Superseded
 

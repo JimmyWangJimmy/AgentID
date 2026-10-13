@@ -1,33 +1,25 @@
-# AgentID Demo
+# AgentID — Judge Mode
 
 **Live:** https://jimmywangjimmy.github.io/AgentID/
 
-## How to watch (30s)
+## How to watch (~60s)
 
-1. Open fullscreen.
-2. Leave **Auto demo** on — every ~8s it flips **Raw average ↔ Trust-weighted**.
-3. Watch the punchline:
-   - **Raw:** SybilBot billboard shows **4.00**; pink puppet edges glow on the ring graph.
-   - **Weighted:** Sybil’s number **animates down 4.00 → 1.22**, EXPOSED badge fires, puppet edges dim, cyan seed edge dominates — the ring collapses.
-4. GoodBot stays high (~4.66→4.69); FakeBot stays low (~1.50→1.44).
+1. Open the Pages URL fullscreen (desktop ≥1280 looks best).
+2. **Judge Mode** is on by default — do nothing.
+3. Autopilot scenes:
+   1. **Problem** — sockpuppets fake trust  
+   2. **ERC-8004** — official Identity #2204–2206 + Reputation feedback on Monad  
+   3. **Raw** — SybilBot 4.00 fools the mean  
+   4. **Weighted** — ring graph + score drop 4.00 → 1.22 **EXPOSED**  
+   5. **Verdicts** — GRANT / CAUTION / DENY  
+4. **Replay** restarts. Toggle Judge Mode off to pause.
 
-## What’s on the page
+## Proof
 
-| Visual | Role |
-|--------|------|
-| Dual-mode scoreboard | Billboard scores + gauges; Raw↔Weighted toggle |
-| Sybil ring (canvas force graph) | 3 puppets ★5 (w=10) + seed flag ★1 (w=500) |
-| Δ chart | weighted − raw; Sybil’s −2.78 in warning red |
-| LIVE RPC | `eth_call` to scorer on Monad testnet (falls back to ONCHAIN.md cache) |
-
-## On-chain proof
-
-- Scorer: [`0x8916357EDB7598d20E257404213CF3D1C099c310`](https://testnet.monadvision.com/address/0x8916357EDB7598d20E257404213CF3D1C099c310)
-- GoodBot raw/w **466/469** · FakeBot **150/144** · SybilBot **400/122**
-- ERC-8004 Identity ids: Good **#2204** · Fake **#2205** · Sybil **#2206**
-
-Details: [`docs/ONCHAIN.md`](./docs/ONCHAIN.md) · research: [`docs/RESEARCH.md`](./docs/RESEARCH.md)
+- AgentID scorer: `0x8916357EDB7598d20E257404213CF3D1C099c310`
+- Official Reputation feedback txs: see [`docs/ONCHAIN.md`](./docs/ONCHAIN.md)
+- LIVE RPC badge = live `eth_call`; otherwise cached ONCHAIN numbers
 
 ## Video
 
-Optional clip: [`docs/AgentID-demo-1min.mp4`](./docs/AgentID-demo-1min.mp4) — prefer the live Pages demo for the animated Raw→Weighted drop.
+[`docs/AgentID-demo-1min.mp4`](./docs/AgentID-demo-1min.mp4) — screen capture of Judge Mode when available. **HTML Judge Mode is the primary submission artifact.**

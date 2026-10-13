@@ -1,284 +1,215 @@
 #!/usr/bin/env python3
-"""Generate AgentID demo MP4 frames (1280x720) then encode with ffmpeg."""
+"""Synthesize AgentID Judge Mode demo MP4 (1280x720)."""
 from __future__ import annotations
-
-import math
-import os
-import shutil
-import subprocess
+import math, shutil, subprocess
 from pathlib import Path
-
 from PIL import Image, ImageDraw, ImageFont
 
-W, H = 1280, 720
-FPS = 30
-DURATION = 58.0  # seconds
+W, H, FPS = 1280, 720, 30
+DURATION = 65.0
 OUT_DIR = Path("/workspace/AgentID/docs/frames")
-MP4_PATH = Path("/workspace/AgentID/docs/AgentID-demo-1min.mp4")
+MP4 = Path("/workspace/AgentID/docs/AgentID-demo-1min.mp4")
+BG = (3, 4, 10)
+TEXT = (245, 247, 255)
+MUTED = (139, 147, 168)
+VIOLET = (167, 139, 250)
+CYAN = (92, 225, 255)
+GREEN = (52, 211, 153)
+AMBER = (251, 191, 36)
+RED = (255, 92, 122)
+PINK = (244, 114, 182)
 
-BG = (11, 15, 20)
-PANEL = (17, 24, 33)
-BORDER = (30, 42, 56)
-TEXT = (230, 237, 243)
-MUTED = (139, 155, 176)
-GREEN = (61, 214, 140)
-CYAN = (92, 200, 255)
-AMBER = (255, 193, 74)
-PINK = (255, 122, 178)
-DIM = (74, 90, 106)
+FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+MONO = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
 
-FONT_REG = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
-FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
-FONT_SANS = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+def font(size, mono=False):
+    try:
+        return ImageFont.truetype(MONO if mono else FONT, size)
+    except Exception:
+        return ImageFont.load_default()
 
-# Timed lines matching npm run demo / demo.html
-LINES = [
-    (0.6, "banner", "=" * 64),
-    (0.8, "header", "  AgentID — Sybil-lite reputation"),
-    (1.0, "banner", "=" * 64),
-    (1.4, "meta", "  Track: Trust / Identity · Monad Metropolis"),
-    (1.8, "hl", "  LIVE: 0xDCcBbFFC…f859 · chain 10143"),
-    (2.3, "meta", "  Rules: No self-attest · One vote · Average (not spam-sum)"),
-    (2.8, "meta", "  Author: Jimmy Wang"),
-    (3.4, "blank", ""),
-    (4.0, "banner", "=" * 64),
-    (4.2, "header", "  Problem: two agents claim to be helpful"),
-    (4.4, "banner", "=" * 64),
-    (5.2, "key", "  Without portable reputation you cannot tell who to trust."),
-    (7.0, "blank", ""),
-    (7.5, "banner", "=" * 64),
-    (7.7, "header", "  1) Register GoodBot + FakeBot"),
-    (7.9, "banner", "=" * 64),
-    (8.8, "ok", "  GoodBot agentId: 1  uri: ipfs://agentid/good-bot"),
-    (10.0, "pink", "  FakeBot agentId: 2  uri: ipfs://agentid/fake-bot"),
-    (11.5, "blank", ""),
-    (12.2, "banner", "=" * 64),
-    (12.4, "header", "  2) Attest GoodBot — 5 / 5 / 4"),
-    (12.6, "banner", "=" * 64),
-    (13.5, "ok", "  tags: reliable, helpful, on-time"),
-    (15.5, "blank", ""),
-    (16.2, "banner", "=" * 64),
-    (16.4, "header", "  3) Attest FakeBot — 1 / 2"),
-    (16.6, "banner", "=" * 64),
-    (17.5, "pink", "  tags: spam, impersonation"),
-    (19.5, "blank", ""),
-    (20.5, "banner", "=" * 64),
-    (20.7, "header", "  4) getReputation — average ×100"),
-    (20.9, "banner", "=" * 64),
-    (22.5, "ok", "  GoodBot  avg=4.66  count=3  unique=3"),
-    (25.0, "pink", "  FakeBot  avg=1.50  count=2  unique=2"),
-    (28.0, "hl", "  → GoodBot clearly beats FakeBot (466 > 150)"),
-    (31.0, "blank", ""),
-    (32.0, "banner", "=" * 64),
-    (32.2, "header", "  5) Sybil-lite: re-attest does not spam-sum"),
-    (32.4, "banner", "=" * 64),
-    (34.0, "ok", "  same attester overwrite → still count=3"),
-    (36.5, "blank", ""),
-    (38.0, "banner", "=" * 64),
-    (38.3, "header", "  Done — portable trust that resists self-boost"),
-    (38.6, "banner", "=" * 64),
-    (41.0, "ok", "  No self-attest · One vote / attester · Average reputation"),
-    (44.0, "hl", "  ★ Live on Monad testnet · GoodBot vs FakeBot seeded"),
-    (47.0, "meta", "  github.com/JimmyWangJimmy/AgentID"),
-    (50.0, "meta", "  jimmywangjimmy.github.io/AgentID/"),
+def lerp(a, b, t):
+    return a + (b - a) * t
+
+def ease(t):
+    return 1 - (1 - t) ** 3
+
+# Scenes: (start, end, id)
+SCENES = [
+    (0, 9, "problem"),
+    (9, 20, "erc8004"),
+    (20, 31, "raw"),
+    (31, 48, "weighted"),
+    (48, 65, "verdict"),
 ]
 
+CAPTIONS = [
+    (0, "01 / 05  Agents can fake trust with sockpuppets."),
+    (9, "02 / 05  ERC-8004 feedback is on-chain. AgentID is the aggregator lens."),
+    (20, "03 / 05  Raw average: SybilBot 4.00 fools the mean."),
+    (31, "04 / 05  Weighted: puppets collapse. Sybil 4.00 → 1.22 EXPOSED."),
+    (48, "05 / 05  Verdicts: GRANT · CAUTION · DENY."),
+]
 
-def color_for(cls: str):
-    return {
-        "banner": DIM,
-        "header": CYAN,
-        "meta": MUTED,
-        "key": TEXT,
-        "ok": GREEN,
-        "hl": AMBER,
-        "pink": PINK,
-        "blank": BG,
-    }.get(cls, TEXT)
+def caption_at(t):
+    c = CAPTIONS[0][1]
+    for start, text in CAPTIONS:
+        if t >= start:
+            c = text
+    return c
 
+def scene_at(t):
+    for a, b, name in SCENES:
+        if a <= t < b:
+            return name, (t - a) / (b - a)
+    return "verdict", 1.0
 
-def load_fonts():
-    return {
-        "title": ImageFont.truetype(FONT_SANS, 48),
-        "sub": ImageFont.truetype(FONT_REG, 22),
-        "badge": ImageFont.truetype(FONT_BOLD, 16),
-        "mono": ImageFont.truetype(FONT_REG, 18),
-        "mono_b": ImageFont.truetype(FONT_BOLD, 18),
-        "chrome": ImageFont.truetype(FONT_REG, 14),
-        "footer": ImageFont.truetype(FONT_REG, 14),
-    }
-
-
-def rounded_rect(draw, xy, radius, fill, outline=None, width=1):
-    draw.rounded_rectangle(xy, radius=radius, fill=fill, outline=outline, width=width)
-
-
-def draw_title_card(img, fonts, t):
-    """First ~3.5s: title card overlay fading into terminal."""
-    draw = ImageDraw.Draw(img)
-    # dark overlay
-    overlay = Image.new("RGBA", (W, H), (11, 15, 20, 230))
-    base = img.convert("RGBA")
-    # fade out after 2.5s
-    if t > 2.5:
-        alpha = max(0, int(230 * (1 - (t - 2.5) / 1.0)))
-        overlay = Image.new("RGBA", (W, H), (11, 15, 20, alpha))
-    composed = Image.alpha_composite(base, overlay)
-    d = ImageDraw.Draw(composed)
-    if t <= 3.4:
-        title = "AgentID"
-        sub1 = "On-chain Agent Identity & Reputation Registry"
-        sub2 = "Monad Metropolis  ·  Trust / Identity & AI Infrastructure"
-        author = "Jimmy Wang"
-        badge = "MOCK REGISTRY — NO CHAIN DEPLOY"
-        # center text
-        def center(text, font, y, fill):
-            bbox = d.textbbox((0, 0), text, font=font)
-            tw = bbox[2] - bbox[0]
-            d.text(((W - tw) // 2, y), text, font=font, fill=fill)
-
-        fade = 255 if t < 2.5 else max(0, int(255 * (1 - (t - 2.5) / 1.0)))
-        def with_a(rgb):
-            return (*rgb, fade) if len(rgb) == 3 else rgb
-
-        # PIL text doesn't use alpha in RGB mode well on RGBA - use fill with alpha
-        center(title, fonts["title"], 240, (*CYAN, fade))
-        center(sub1, fonts["sub"], 310, (*TEXT, fade))
-        center(sub2, fonts["sub"], 345, (*MUTED, fade))
-        center(author, fonts["sub"], 390, (*GREEN, fade))
-        # badge
-        bb = d.textbbox((0, 0), badge, font=fonts["badge"])
-        bw = bb[2] - bb[0] + 28
-        bh = bb[3] - bb[1] + 14
-        bx = (W - bw) // 2
-        by = 440
-        d.rounded_rectangle([bx, by, bx + bw, by + bh], radius=20,
-                            outline=(*AMBER, fade), width=2)
-        center(badge, fonts["badge"], by + 6, (*AMBER, fade))
-    return composed.convert("RGB")
-
-
-def visible_lines(t: float):
-    return [(cls, text) for (ts, cls, text) in LINES if ts <= t]
-
-
-def draw_frame(t: float, fonts) -> Image.Image:
-    img = Image.new("RGB", (W, H), BG)
-    draw = ImageDraw.Draw(img)
-
-    # subtle vignette circles (simple)
-    # top header outside terminal
-    header_y = 28
-    draw.text((40, header_y), "AgentID", font=fonts["title"], fill=CYAN)
-    draw.text((230, header_y + 18), "· Monad Metropolis · Trust/Identity · Jimmy Wang",
-              font=fonts["chrome"], fill=MUTED)
-    # badge top-right
-    badge = "MOCK"
-    bb = draw.textbbox((0, 0), badge, font=fonts["badge"])
-    bw = bb[2] - bb[0] + 24
-    bh = bb[3] - bb[1] + 10
-    bx, by = W - 40 - bw, header_y + 12
-    draw.rounded_rectangle([bx, by, bx + bw, by + bh], radius=12, outline=AMBER, width=2)
-    draw.text((bx + 12, by + 4), badge, font=fonts["badge"], fill=AMBER)
-
-    # terminal panel
-    tx0, ty0, tx1, ty1 = 40, 90, W - 40, H - 50
-    rounded_rect(draw, [tx0, ty0, tx1, ty1], 14, PANEL, outline=BORDER, width=2)
-
-    # chrome bar
-    draw.rectangle([tx0, ty0, tx1, ty0 + 36], fill=(13, 19, 26))
-    for i, c in enumerate([(255, 95, 87), (254, 188, 46), (40, 200, 64)]):
-        cx = tx0 + 18 + i * 18
-        cy = ty0 + 18
-        draw.ellipse([cx - 5, cy - 5, cx + 5, cy + 5], fill=c)
-    draw.text((tx0 + 80, ty0 + 10), "~/AgentID  ·  npm run demo", font=fonts["chrome"], fill=DIM)
-
-    # progress bar at bottom of panel
-    prog_y = ty1 - 18
-    draw.rectangle([tx0 + 20, prog_y, tx1 - 20, prog_y + 6], fill=BORDER)
-    pct = min(1.0, t / DURATION)
-    pw = int((tx1 - tx0 - 40) * pct)
-    if pw > 0:
-        draw.rectangle([tx0 + 20, prog_y, tx0 + 20 + pw, prog_y + 6], fill=GREEN)
-
-    # terminal content
-    lines = visible_lines(t)
-    # show prompt until first line
-    x = tx0 + 28
-    y = ty0 + 52
-    line_h = 24
-    max_lines = 22
-
-    if t < 0.8:
-        draw.text((x, y), "$ npm run demo", font=fonts["mono"], fill=MUTED)
-        # blinking cursor
-        if int(t * 2) % 2 == 0:
-            draw.rectangle([x + 170, y + 2, x + 180, y + 20], fill=GREEN)
+def draw_bg(draw, name):
+    # vignette-ish rects
+    draw.rectangle([0, 0, W, H], fill=BG)
+    if name == "verdict":
+        draw.ellipse([W*0.2, -H*0.3, W*0.8, H*0.4], fill=(20, 40, 35))
+    elif name in ("raw", "weighted"):
+        draw.ellipse([W*0.15, -H*0.35, W*0.85, H*0.45], fill=(40, 18, 28))
     else:
-        # only show last max_lines
-        shown = lines[-max_lines:]
-        for cls, text in shown:
-            if cls == "blank":
-                y += line_h // 2
-                continue
-            font = fonts["mono_b"] if cls in ("header", "ok") else fonts["mono"]
-            # truncate long lines for safety
-            display = text if len(text) <= 88 else text[:85] + "..."
-            draw.text((x, y), display, font=font, fill=color_for(cls))
-            y += line_h
-            if y > prog_y - 30:
-                break
+        draw.ellipse([W*0.15, -H*0.35, W*0.85, H*0.45], fill=(28, 22, 48))
 
-    # footer
-    draw.text((40, H - 36), "register → attest → getReputation", font=fonts["footer"], fill=DIM)
-    draw.text((W - 360, H - 36), "github.com/JimmyWangJimmy/AgentID", font=fonts["footer"], fill=DIM)
+def draw_chrome(draw, t):
+    draw.text((40, 28), "AgentID", fill=TEXT, font=font(22))
+    draw.text((140, 34), "Judge Mode · Monad", fill=MUTED, font=font(14))
+    # progress pills
+    step = 0
+    for i, (a, _, _) in enumerate(SCENES):
+        if t >= a:
+            step = i
+    x = W - 220
+    for i in range(5):
+        col = VIOLET if i == step else ((80, 70, 110) if i < step else (40, 44, 56))
+        draw.rounded_rectangle([x + i*36, 36, x + i*36 + 28, 42], radius=2, fill=col)
 
-    if t < 3.5:
-        img = draw_title_card(img, fonts, t)
+def draw_caption_bar(draw, t):
+    draw.rectangle([0, H - 70, W, H], fill=(8, 10, 18))
+    draw.text((40, H - 48), caption_at(t), fill=TEXT, font=font(18))
+
+def scene_problem(draw, p):
+    draw.text((W//2, 200), "THE PROBLEM", fill=VIOLET, font=font(16), anchor="mm")
+    draw.text((W//2, 280), "Agents can fake trust", fill=TEXT, font=font(54), anchor="mm")
+    draw.text((W//2, 350), "with sockpuppets.", fill=TEXT, font=font(54), anchor="mm")
+    draw.text((W//2, 430), "Open feedback alone is not a gate.", fill=MUTED, font=font(22), anchor="mm")
+
+def scene_erc(draw, p):
+    draw.text((W//2, 160), "ERC-8004 ON MONAD", fill=CYAN, font=font(16), anchor="mm")
+    draw.text((W//2, 230), "Official feedback is live.", fill=TEXT, font=font(48), anchor="mm")
+    boxes = [
+        (220, "GoodBot #2204", "summary ≈ 4★", GREEN),
+        (640, "FakeBot #2205", "summary ≈ 1★", AMBER),
+        (1060, "SybilBot #2206", "summary ≈ 4★", PINK),
+    ]
+    for cx, title, sub, col in boxes:
+        draw.rounded_rectangle([cx-150, 340, cx+150, 440], radius=16, outline=col, width=2)
+        draw.text((cx, 375), title, fill=TEXT, font=font(18), anchor="mm")
+        draw.text((cx, 410), sub, fill=MUTED, font=font(14), anchor="mm")
+
+def scene_raw(draw, p):
+    draw.text((W//2, 150), "RAW AVERAGE", fill=RED, font=font(16), anchor="mm")
+    draw.text((W//2, 210), "SybilBot looks fine.", fill=TEXT, font=font(48), anchor="mm")
+    cards = [
+        (250, "GOODBOT", "4.66", GREEN, False),
+        (640, "FAKEBOT", "1.50", AMBER, False),
+        (1030, "SYBILBOT", "4.00", PINK, True),
+    ]
+    for cx, name, num, col, glow in cards:
+        draw.rounded_rectangle([cx-140, 300, cx+140, 480], radius=18, outline=col if glow else (40,44,56), width=2)
+        draw.text((cx, 340), name, fill=MUTED, font=font(14), anchor="mm")
+        draw.text((cx, 400), num, fill=col, font=font(56, mono=True), anchor="mm")
+        if glow:
+            draw.text((cx, 455), "FOOLS RAW AVG", fill=PINK, font=font(12), anchor="mm")
+
+def scene_weighted(draw, img, p):
+    draw.text((W//2, 120), "AGENTID WEIGHTED", fill=VIOLET, font=font(16), anchor="mm")
+    draw.text((W//2, 175), "Trust-weight the attesters.", fill=TEXT, font=font(36), anchor="mm")
+    # ring
+    cx, cy, R = W//2, 400, 110
+    collapsed = p > 0.35
+    nodes = [
+        ("S", cx, cy, 26, PINK),
+        ("P1", cx-160, cy-80, 14, PINK),
+        ("P2", cx+160, cy-80, 14, PINK),
+        ("P3", cx, cy+130, 14, PINK),
+        ("A1", cx+170, cy+100, 16, CYAN),
+    ]
+    edges = [(1,0,PINK),(2,0,PINK),(3,0,PINK),(4,0,CYAN)]
+    for a,b,col in edges:
+        thin = collapsed and col == PINK
+        draw.line([nodes[a][1], nodes[a][2], nodes[b][1], nodes[b][2]],
+                  fill=(col[0], col[1], col[2], 255), width=2 if thin else (5 if col==CYAN else 3))
+    for lab,x,y,r,col in nodes:
+        draw.ellipse([x-r,y-r,x+r,y+r], fill=col)
+        draw.text((x,y), lab, fill=BG, font=font(11, mono=True), anchor="mm")
+    # score drop
+    tdrop = ease(min(1, max(0, (p - 0.25) / 0.45)))
+    val = lerp(4.00, 1.22, tdrop)
+    draw.text((W//2 - 120, 560), "4.00", fill=PINK, font=font(40, mono=True), anchor="mm")
+    draw.text((W//2, 560), "→", fill=MUTED, font=font(36), anchor="mm")
+    draw.text((W//2 + 120, 560), f"{val:.2f}", fill=RED, font=font(40, mono=True), anchor="mm")
+    if tdrop > 0.7:
+        draw.rounded_rectangle([W//2+200, 540, W//2+320, 580], radius=12, fill=(60, 20, 30))
+        draw.text((W//2+260, 560), "EXPOSED", fill=RED, font=font(14), anchor="mm")
+
+def scene_verdict(draw, p):
+    draw.text((W//2, 130), "VERDICTS", fill=GREEN, font=font(16), anchor="mm")
+    draw.text((W//2, 185), "Access cleared — or denied.", fill=TEXT, font=font(40), anchor="mm")
+    cards = [
+        (250, "GOODBOT", "GRANT", GREEN, "weighted 4.69"),
+        (640, "FAKEBOT", "CAUTION", AMBER, "weighted 1.44"),
+        (1030, "SYBILBOT", "DENY", RED, "weighted 1.22"),
+    ]
+    appear = [0.05, 0.2, 0.35]
+    for i,(cx,name,stamp,col,sub) in enumerate(cards):
+        if p < appear[i]:
+            continue
+        draw.rounded_rectangle([cx-150, 280, cx+150, 520], radius=20, outline=col, width=3)
+        draw.text((cx, 320), name, fill=MUTED, font=font(14), anchor="mm")
+        draw.text((cx, 390), stamp, fill=col, font=font(40), anchor="mm")
+        draw.text((cx, 460), sub, fill=MUTED, font=font(14, mono=True), anchor="mm")
+
+def render(t):
+    img = Image.new("RGB", (W, H), BG)
+    draw = ImageDraw.Draw(img, "RGBA") if False else ImageDraw.Draw(img)
+    name, p = scene_at(t)
+    draw_bg(draw, name)
+    draw_chrome(draw, t)
+    if name == "problem":
+        scene_problem(draw, p)
+    elif name == "erc8004":
+        scene_erc(draw, p)
+    elif name == "raw":
+        scene_raw(draw, p)
+    elif name == "weighted":
+        scene_weighted(draw, img, p)
+    else:
+        scene_verdict(draw, p)
+    draw_caption_bar(draw, t)
     return img
-
 
 def main():
     if OUT_DIR.exists():
         shutil.rmtree(OUT_DIR)
     OUT_DIR.mkdir(parents=True)
-
-    fonts = load_fonts()
-    n_frames = int(DURATION * FPS)
-    print(f"Generating {n_frames} frames @ {FPS}fps ({DURATION}s)…")
-
-    # Generate every frame — but to save time/disk, we can generate at lower
-    # density and let ffmpeg interpolate... Better: generate all at 15fps then set -r 15
-    # For quality use 15fps for generation (still smooth for terminal text)
-    gen_fps = 15
-    n = int(DURATION * gen_fps)
+    n = int(DURATION * FPS)
     for i in range(n):
-        t = i / gen_fps
-        frame = draw_frame(t, fonts)
-        frame.save(OUT_DIR / f"frame_{i:05d}.png", optimize=True)
-        if i % 30 == 0:
-            print(f"  frame {i}/{n} t={t:.1f}s")
-
-    print("Encoding MP4…")
-    # hold last frame feel already in duration
-    cmd = [
-        "ffmpeg", "-y",
-        "-framerate", str(gen_fps),
+        t = i / FPS
+        render(t).save(OUT_DIR / f"frame_{i:05d}.png")
+        if i % 60 == 0:
+            print(f"frame {i}/{n}")
+    subprocess.check_call([
+        "ffmpeg", "-y", "-framerate", str(FPS),
         "-i", str(OUT_DIR / "frame_%05d.png"),
-        "-c:v", "libx264",
-        "-pix_fmt", "yuv420p",
-        "-crf", "20",
-        "-movflags", "+faststart",
-        "-vf", "scale=1280:720",
-        str(MP4_PATH),
-    ]
-    subprocess.check_call(cmd)
-    print(f"Wrote {MP4_PATH} ({MP4_PATH.stat().st_size} bytes)")
-
-    # cleanup frames to keep repo lean (keep mp4 + html only)
-    shutil.rmtree(OUT_DIR)
-    print("Cleaned frames/")
-
+        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
+        "-movflags", "+faststart", str(MP4)
+    ])
+    print("wrote", MP4, MP4.stat().st_size)
+    shutil.rmtree(OUT_DIR, ignore_errors=True)
 
 if __name__ == "__main__":
     main()
