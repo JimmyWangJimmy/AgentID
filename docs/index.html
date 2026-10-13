@@ -653,6 +653,19 @@ progress.addEventListener("click", (e) => {
   resize(); tick();
 })();
 
+
+function paintScores() {
+  const g = scores.good, f = scores.fake, s = scores.sybil;
+  const el = (id) => document.getElementById(id);
+  if (el('rawGood')) el('rawGood').textContent = g.raw.toFixed(2);
+  if (el('rawFake')) el('rawFake').textContent = f.raw.toFixed(2);
+  if (el('rawSybil')) el('rawSybil').textContent = s.raw.toFixed(2);
+  if (el('dropFrom')) el('dropFrom').textContent = s.raw.toFixed(2);
+  if (el('vGoodScores')) el('vGoodScores').textContent = `raw ${g.raw.toFixed(2)} · w ${g.w.toFixed(2)}`;
+  if (el('vFakeScores')) el('vFakeScores').textContent = `raw ${f.raw.toFixed(2)} · w ${f.w.toFixed(2)}`;
+  if (el('vSybilScores')) el('vSybilScores').textContent = `raw ${s.raw.toFixed(2)} · w ${s.w.toFixed(2)}`;
+}
+
 /* ---- Live RPC ---- */
 async function liveScores() {
   const chip = document.getElementById("rpcChip");
