@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="description" content="AgentID — Judge Mode. ERC-8004 feedback on Monad; anti-Sybil weighted verdicts. SybilBot raw 4.00 → weighted 1.22 → DENY." />
+<meta name="description" content="AgentID — anti-Sybil aggregator for ERC-8004 on Monad. SybilBot raw 4.00 → weighted 1.22 → DENY." />
 <meta name="theme-color" content="#03040a" />
-<title>AgentID · Judge Mode · Monad</title>
+<title>AgentID · Sybil Exposed · Monad</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
@@ -21,58 +21,52 @@
   --amber: #fbbf24;
   --red: #ff5c7a;
   --pink: #f472b6;
-  --grant: #34d399;
-  --caution: #fbbf24;
-  --deny: #ff5c7a;
+  --border: rgba(255,255,255,.08);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
   background: var(--bg); color: var(--text);
   font-family: "Instrument Sans", system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased; overflow: hidden;
+  -webkit-font-smoothing: antialiased; overflow-x: hidden;
 }
 .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
-.display { font-family: Syne, "Instrument Sans", sans-serif; font-weight: 800; letter-spacing: -.04em; }
 a { color: var(--cyan); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 #aurora {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(167,139,250,.35), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(167,139,250,.32), transparent 55%),
     radial-gradient(ellipse 45% 40% at 90% 60%, rgba(92,225,255,.1), transparent 50%),
     radial-gradient(ellipse 40% 35% at 5% 85%, rgba(255,92,122,.08), transparent 50%),
     var(--bg);
-  transition: background .8s ease;
+  transition: background .7s ease;
 }
-#aurora.scene-deny {
+#aurora.weighted {
   background:
-    radial-gradient(ellipse 70% 45% at 50% -5%, rgba(255,92,122,.28), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 50% -5%, rgba(255,92,122,.26), transparent 55%),
     radial-gradient(ellipse 40% 35% at 80% 70%, rgba(244,114,182,.12), transparent 50%),
     var(--bg);
 }
-#aurora.scene-grant {
+#aurora.verdicts {
   background:
-    radial-gradient(ellipse 70% 45% at 50% -5%, rgba(52,211,153,.22), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 50% -5%, rgba(52,211,153,.2), transparent 55%),
     radial-gradient(ellipse 40% 35% at 15% 70%, rgba(92,225,255,.1), transparent 50%),
     var(--bg);
 }
-#particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .55; }
+#particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .45; }
 
 .shell {
   position: relative; z-index: 2;
-  height: 100dvh; max-height: 100vh;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  padding: 14px 22px 0;
-  max-width: 1400px; margin: 0 auto;
+  max-width: 1320px; margin: 0 auto;
+  padding: 12px 18px 10px;
+  min-height: 100dvh;
+  display: flex; flex-direction: column; gap: 10px;
 }
 
-/* TOP BAR */
 .bar {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  flex-wrap: wrap; padding-bottom: 8px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
 }
 .brand { display: flex; align-items: center; gap: 10px; }
 .mark {
@@ -87,7 +81,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 600;
-  border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); color: var(--muted);
+  border: 1px solid var(--border); background: rgba(255,255,255,.03); color: var(--muted);
 }
 .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
 .chip.live .dot { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.6s infinite; }
@@ -95,7 +89,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .btn {
   appearance: none; border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.04); color: var(--text);
-  padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
   cursor: pointer; font-family: inherit; transition: .15s;
 }
 .btn:hover { background: rgba(255,255,255,.09); }
@@ -106,186 +100,272 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .btn.judge.on { box-shadow: 0 0 0 2px rgba(167,139,250,.5), 0 8px 28px rgba(124,58,237,.45); }
 .btn.ghost { color: var(--muted); }
 
-/* STAGE */
-.stage {
-  position: relative; overflow: hidden;
-  border-radius: 24px;
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(8,10,18,.55);
-  backdrop-filter: blur(12px);
-  min-height: 0;
+.hero {
+  text-align: center; padding: 2px 0 4px;
 }
-.scene {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; justify-content: center; align-items: center;
-  padding: 28px 36px; text-align: center;
-  opacity: 0; pointer-events: none;
-  transform: translateY(12px) scale(.985);
-  transition: opacity .7s ease, transform .7s ease;
-}
-.scene.active {
-  opacity: 1; pointer-events: auto;
-  transform: none;
-}
-
-.kicker {
-  font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
-  color: var(--violet); margin-bottom: 14px;
-}
-.kicker.cyan { color: var(--cyan); }
-.kicker.red { color: var(--red); }
-.kicker.green { color: var(--green); }
-
-.headline {
+.hero h2 {
   font-family: Syne, sans-serif; font-weight: 800;
-  font-size: clamp(32px, 5.5vw, 72px); line-height: 1.02;
-  letter-spacing: -.045em; max-width: 16ch; margin: 0 auto 16px;
+  font-size: clamp(20px, 3.2vw, 34px); letter-spacing: -.04em; line-height: 1.15;
 }
-.sub {
-  font-size: clamp(15px, 1.6vw, 20px); color: var(--muted);
-  max-width: 42ch; margin: 0 auto 28px; line-height: 1.5; font-weight: 500;
+.hero h2 em { font-style: normal; color: var(--cyan); }
+.hero h2 .die { color: var(--red); }
+.hero p { color: var(--muted); font-size: 13px; margin-top: 4px; font-weight: 500; }
+
+.mode-bar {
+  display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap;
+}
+.toggle {
+  display: inline-flex; padding: 4px; border-radius: 999px;
+  background: rgba(255,255,255,.04); border: 1px solid var(--border);
+  position: relative;
+}
+.toggle button {
+  appearance: none; border: 0; background: transparent; color: var(--muted);
+  padding: 9px 20px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; position: relative; z-index: 1;
+  transition: color .25s;
+}
+.toggle button.on { color: #fff; }
+.toggle .slider {
+  position: absolute; top: 4px; bottom: 4px; width: calc(50% - 4px);
+  border-radius: 999px; background: linear-gradient(135deg, #7c3aed, #6366f1);
+  box-shadow: 0 4px 18px rgba(99,102,241,.45);
+  transition: left .45s cubic-bezier(.4,0,.2,1);
+  left: 4px;
+}
+.toggle.weighted .slider { left: calc(50%); }
+
+.stage {
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 14px;
+  flex: 1;
+  min-height: min(52vh, 480px);
+}
+@media (max-width: 960px) {
+  .stage { grid-template-columns: 1fr; min-height: auto; }
 }
 
-/* Feedback strip */
-.fb-strip {
-  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px;
+.panel {
+  background: linear-gradient(180deg, rgba(16,18,28,.85), rgba(10,12,20,.92));
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  position: relative; overflow: hidden;
 }
-.fb-pill {
-  padding: 10px 16px; border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.03);
-  font-size: 13px; text-align: left; min-width: 160px;
+.panel::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(139,92,246,.1), transparent 60%);
 }
-.fb-pill b { display: block; font-size: 14px; margin-bottom: 2px; }
-.fb-pill span { color: var(--muted); font-size: 11px; }
-.fb-pill.good { border-color: rgba(52,211,153,.35); }
-.fb-pill.fake { border-color: rgba(251,191,36,.35); }
-.fb-pill.sybil { border-color: rgba(244,114,182,.35); }
 
-/* Score cards (raw scene) */
-.score-row {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px; width: min(960px, 100%); margin-top: 8px;
+.board { padding: 18px 18px 14px; display: flex; flex-direction: column; gap: 12px; height: 100%; }
+.board-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
 }
-.score-card {
-  border-radius: 20px; padding: 22px 18px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.03);
-  text-align: center; position: relative; overflow: hidden;
+.board-head h3 {
+  font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--dim);
 }
-.score-card .name { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
-.score-card .num {
-  font-family: "JetBrains Mono", monospace; font-weight: 800;
-  font-size: clamp(40px, 6vw, 64px); line-height: 1.1; margin: 8px 0 4px;
-  transition: color .5s, transform .5s;
+.mode-label {
+  font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+  background: rgba(139,92,246,.15); color: var(--violet); border: 1px solid rgba(139,92,246,.3);
+  letter-spacing: .06em;
 }
-.score-card .hint { font-size: 12px; color: var(--dim); }
-.score-card.good .num { color: var(--green); }
-.score-card.fake .num { color: var(--amber); }
-.score-card.sybil .num { color: var(--pink); }
-.score-card.sybil.raw-glow {
-  box-shadow: 0 0 40px rgba(244,114,182,.25);
+.board.weighted-mode .mode-label {
+  background: rgba(255,92,122,.12); color: var(--red); border-color: rgba(255,92,122,.35);
+}
+
+.scores {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex: 1;
+}
+@media (max-width: 560px) { .scores { grid-template-columns: 1fr; } }
+
+.agent {
+  position: relative;
+  border-radius: 16px;
+  padding: 16px 12px 14px;
+  background: rgba(255,255,255,.025);
+  border: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; text-align: center;
+  transition: border-color .4s, background .4s, box-shadow .5s;
+  min-height: 220px;
+}
+.agent .name {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+}
+.agent .id { font-size: 10px; color: var(--dim); }
+.agent .score {
+  font-family: "JetBrains Mono", monospace;
+  font-size: clamp(40px, 5.5vw, 60px);
+  font-weight: 800; letter-spacing: -.06em; line-height: 1;
+  margin: 6px 0 2px;
+  transition: color .4s, text-shadow .4s;
+}
+.agent .delta {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px; font-weight: 700; height: 16px;
+  opacity: 0; transition: opacity .35s;
+}
+.agent .delta.show { opacity: 1; }
+.agent .delta.up { color: var(--green); }
+.agent .delta.down { color: var(--red); }
+
+.gauge-wrap { width: 78px; height: 78px; margin-top: 4px; position: relative; }
+.gauge-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.gauge-wrap .track { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 8; }
+.gauge-wrap .fill {
+  fill: none; stroke-width: 8; stroke-linecap: round;
+  stroke-dasharray: 201; stroke-dashoffset: 201;
+  transition: stroke-dashoffset .65s cubic-bezier(.4,0,.2,1), stroke .4s;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+.agent.good .fill { stroke: var(--green); color: var(--green); }
+.agent.fake .fill { stroke: var(--amber); color: var(--amber); }
+.agent.sybil .fill { stroke: var(--pink); color: var(--pink); }
+.agent.sybil.exposed .fill { stroke: var(--red); color: var(--red); }
+
+.badge-state {
+  position: absolute; top: 8px; right: 8px;
+  font-size: 9px; font-weight: 800; letter-spacing: .08em;
+  padding: 3px 8px; border-radius: 999px;
+  opacity: 0; transform: scale(.8);
+  transition: .4s cubic-bezier(.34,1.56,.64,1);
+}
+.badge-state.show { opacity: 1; transform: scale(1); }
+
+.agent.good .score { color: var(--green); text-shadow: 0 0 36px rgba(52,211,153,.35); }
+.agent.good .badge-state { background: rgba(52,211,153,.15); color: var(--green); border: 1px solid rgba(52,211,153,.35); }
+.agent.fake .score { color: var(--amber); text-shadow: 0 0 36px rgba(251,191,36,.25); }
+.agent.fake .badge-state { background: rgba(251,191,36,.12); color: var(--amber); border: 1px solid rgba(251,191,36,.3); }
+.agent.sybil .score { color: var(--pink); text-shadow: 0 0 36px rgba(244,114,182,.35); }
+.agent.sybil .badge-state { background: rgba(255,92,122,.2); color: var(--red); border: 1px solid rgba(255,92,122,.5); }
+.agent.sybil.exposed {
+  border-color: rgba(255,92,122,.55);
+  background: rgba(255,92,122,.08);
+  box-shadow: 0 0 48px rgba(255,92,122,.22), inset 0 0 40px rgba(255,92,122,.06);
+}
+.agent.sybil.exposed .score {
+  color: var(--red) !important;
+  text-shadow: 0 0 60px rgba(255,92,122,.7);
+  animation: shake .45s ease;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.agent.sybil.raw-glow {
   border-color: rgba(244,114,182,.45);
-}
-.badge-fool {
-  display: inline-block; margin-top: 10px; padding: 4px 10px; border-radius: 999px;
-  background: rgba(244,114,182,.15); color: var(--pink); font-size: 11px; font-weight: 700;
+  box-shadow: 0 0 36px rgba(244,114,182,.2);
 }
 
-/* Ring canvas scene */
-.ring-wrap {
-  width: min(720px, 100%); height: min(420px, 48vh);
-  position: relative; margin: 0 auto;
+.board-hint {
+  font-size: 13px; color: var(--muted); text-align: center; font-weight: 500; min-height: 20px;
 }
-#ring { width: 100%; height: 100%; display: block; }
-.ring-caption {
-  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
-  font-size: 12px; color: var(--muted); background: rgba(3,4,10,.7);
-  padding: 6px 12px; border-radius: 999px; backdrop-filter: blur(8px);
-}
-.drop-board {
-  display: flex; gap: 24px; justify-content: center; align-items: baseline;
-  margin-top: 12px; flex-wrap: wrap;
-}
-.drop-board .big {
-  font-family: "JetBrains Mono", monospace; font-weight: 800;
-  font-size: clamp(36px, 5vw, 56px);
-}
-.drop-board .arrow { color: var(--dim); font-size: 28px; }
-.drop-board .from { color: var(--pink); }
-.drop-board .to { color: var(--red); }
-.exposed {
-  display: inline-block; margin-left: 8px; padding: 4px 12px; border-radius: 999px;
-  background: rgba(255,92,122,.2); color: var(--red); font-size: 12px; font-weight: 800;
-  letter-spacing: .08em; vertical-align: middle;
-  animation: pop .4s ease;
-}
-@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.board-hint .hi { color: var(--pink); font-weight: 700; }
+.board-hint .lo { color: var(--red); font-weight: 700; }
 
-/* Verdicts */
-.verdicts {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px; width: min(1100px, 100%); margin-top: 8px;
+.graph-panel { padding: 14px 14px 10px; display: flex; flex-direction: column; height: 100%; }
+.graph-panel .gh {
+  display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;
+}
+.graph-panel .gh h3 {
+  font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--dim);
+}
+.graph-panel .gh span { font-size: 11px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
+#ring { width: 100%; flex: 1; min-height: 260px; display: block; }
+.graph-foot {
+  font-size: 12px; color: var(--muted); text-align: center; padding: 6px 4px 2px; min-height: 32px;
+}
+
+.delta-strip {
+  border-radius: 16px; border: 1px solid var(--border);
+  background: rgba(8,10,18,.6); padding: 12px 16px 10px;
+}
+.delta-strip h3 {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 10px; text-align: center;
+}
+.deltas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 560px) { .deltas { grid-template-columns: 1fr; } }
+.delta-row .lbl { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+.delta-row .track {
+  position: relative; height: 10px; border-radius: 999px;
+  background: rgba(255,255,255,.06); overflow: hidden;
+}
+.delta-row .track .zero {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.2);
+}
+.delta-row .bar {
+  position: absolute; top: 0; bottom: 0; height: 100%; border-radius: 999px;
+  transition: width .7s cubic-bezier(.4,0,.2,1), left .7s, background .4s;
+}
+.delta-row .val {
+  font-size: 13px; font-weight: 800; margin-top: 4px; text-align: right;
+}
+.delta-row.sybil .val { color: var(--red); }
+.delta-row.good .val { color: var(--green); }
+.delta-row.fake .val { color: var(--amber); }
+
+.verdict-strip {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  opacity: 0; max-height: 0; overflow: hidden;
+  transition: opacity .5s, max-height .5s, margin .3s;
+  margin: 0;
+}
+.verdict-strip.show {
+  opacity: 1; max-height: 200px; margin-top: 2px;
 }
 .verdict {
-  border-radius: 22px; padding: 28px 20px 24px;
-  border: 1px solid rgba(255,255,255,.1);
-  background: rgba(255,255,255,.03);
-  text-align: center; position: relative;
-  transform: translateY(20px); opacity: 0;
-  transition: transform .55s cubic-bezier(.2,.8,.2,1), opacity .55s;
+  border-radius: 16px; padding: 16px 12px;
+  border: 1px solid var(--border); background: rgba(255,255,255,.03);
+  text-align: center;
+  transform: translateY(12px); opacity: 0;
+  transition: transform .5s cubic-bezier(.2,.8,.2,1), opacity .5s;
 }
-.verdict.show { transform: none; opacity: 1; }
-.verdict .agent { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+.verdict-strip.show .verdict { transform: none; opacity: 1; }
+.verdict-strip.show .verdict:nth-child(2) { transition-delay: .12s; }
+.verdict-strip.show .verdict:nth-child(3) { transition-delay: .24s; }
+.verdict .agent-lbl { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
 .verdict .stamp {
-  font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(28px, 3.5vw, 42px);
-  letter-spacing: -.03em; margin-bottom: 8px;
+  font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(22px, 3vw, 32px);
+  letter-spacing: -.03em; margin: 4px 0;
 }
-.verdict .reason { font-size: 13px; color: var(--muted); line-height: 1.45; max-width: 28ch; margin: 0 auto 12px; }
-.verdict .scores { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--dim); }
-.verdict.grant { border-color: rgba(52,211,153,.4); box-shadow: 0 0 48px rgba(52,211,153,.12); }
-.verdict.grant .stamp { color: var(--grant); }
-.verdict.caution { border-color: rgba(251,191,36,.4); box-shadow: 0 0 48px rgba(251,191,36,.1); }
-.verdict.caution .stamp { color: var(--caution); }
-.verdict.deny { border-color: rgba(255,92,122,.45); box-shadow: 0 0 48px rgba(255,92,122,.15); }
-.verdict.deny .stamp { color: var(--deny); }
+.verdict .scores { font-size: 11px; color: var(--dim); }
+.verdict.grant { border-color: rgba(52,211,153,.4); box-shadow: 0 0 32px rgba(52,211,153,.1); }
+.verdict.grant .stamp { color: var(--green); }
+.verdict.caution { border-color: rgba(251,191,36,.4); }
+.verdict.caution .stamp { color: var(--amber); }
+.verdict.deny { border-color: rgba(255,92,122,.45); box-shadow: 0 0 32px rgba(255,92,122,.12); }
+.verdict.deny .stamp { color: var(--red); }
 
-/* NARRATOR */
 .narrator {
-  padding: 14px 4px 18px;
-  display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
+  display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+  padding: 4px 2px 0;
 }
 .caption {
-  min-height: 48px;
-  font-size: clamp(14px, 1.5vw, 17px); font-weight: 500; color: var(--text);
-  line-height: 1.4;
+  font-size: clamp(13px, 1.4vw, 15px); font-weight: 500; line-height: 1.4; min-height: 40px;
 }
 .caption .step {
   display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .12em;
-  color: var(--violet); margin-right: 10px; vertical-align: middle;
+  color: var(--violet); margin-right: 8px;
 }
-.progress {
-  display: flex; gap: 6px; align-items: center;
-}
+.progress { display: flex; gap: 6px; }
 .progress i {
   width: 28px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.1);
-  transition: background .3s, width .3s;
+  cursor: pointer; transition: background .3s, width .3s;
 }
 .progress i.on { background: var(--violet); width: 40px; }
 .progress i.done { background: rgba(167,139,250,.45); }
 
 .links {
   display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
-  font-size: 11px; color: var(--dim); padding-bottom: 10px;
+  font-size: 11px; color: var(--dim); padding-bottom: 6px;
 }
 .links a { color: var(--muted); }
 
 @media (max-width: 800px) {
-  body { overflow: auto; }
-  .shell { height: auto; min-height: 100dvh; padding: 12px 12px 0; }
-  .stage { min-height: 70vh; }
-  .score-row, .verdicts { grid-template-columns: 1fr; }
-  .headline { max-width: 100%; }
   .narrator { grid-template-columns: 1fr; }
+  .verdict-strip.show { max-height: 480px; }
 }
 </style>
 </head>
@@ -310,99 +390,123 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
     </div>
   </header>
 
+  <div class="hero">
+    <h2>Raw average trusts SybilBot. <em>Trust-weighted</em> makes it <span class="die">die</span>.</h2>
+    <p>ERC-8004 feedback → AgentID EigenTrust-lite · agents #2204 / #2205 / #2206</p>
+  </div>
+
+  <div class="mode-bar">
+    <div class="toggle" id="modeToggle" role="group" aria-label="Score mode">
+      <div class="slider" id="modeSlider"></div>
+      <button type="button" id="btnRaw" class="on" data-mode="raw">Raw average</button>
+      <button type="button" id="btnW" data-mode="weighted">Trust-weighted</button>
+    </div>
+  </div>
+
   <main class="stage" id="stage">
-    <!-- S0 Problem -->
-    <section class="scene active" data-scene="0">
-      <div class="kicker">The problem</div>
-      <h2 class="headline display">Agents can fake trust with sockpuppets.</h2>
-      <p class="sub">On open feedback registries, a ring of fresh wallets can inflate raw averages. Gatekeepers that trust raw scores get played.</p>
-    </section>
-
-    <!-- S1 ERC-8004 -->
-    <section class="scene" data-scene="1">
-      <div class="kicker cyan">ERC-8004 on Monad</div>
-      <h2 class="headline display">Official feedback is already on-chain.</h2>
-      <p class="sub">Identity NFTs + ReputationRegistry <span class="mono">giveFeedback</span>. AgentID does not replace 8004 — it is the aggregator lens.</p>
-      <div class="fb-strip">
-        <div class="fb-pill good"><b>GoodBot #2204</b><span>3 clients · summary ≈ 4★</span></div>
-        <div class="fb-pill fake"><b>FakeBot #2205</b><span>2 clients · summary ≈ 1★</span></div>
-        <div class="fb-pill sybil"><b>SybilBot #2206</b><span>4 clients · summary ≈ 4★</span></div>
+    <section class="panel board" id="board">
+      <div class="board-head">
+        <h3>Live scoreboard</h3>
+        <span class="mode-label" id="modeLabel">RAW AVERAGE</span>
       </div>
-    </section>
-
-    <!-- S2 Raw fools -->
-    <section class="scene" data-scene="2">
-      <div class="kicker red">Raw average</div>
-      <h2 class="headline display">SybilBot looks fine.</h2>
-      <p class="sub">Unweighted mean treats a puppet the same as a trusted reviewer. That is the exploit.</p>
-      <div class="score-row">
-        <div class="score-card good">
+      <div class="scores">
+        <div class="agent good" id="card-good">
+          <span class="badge-state" id="badge-good">TRUSTED</span>
           <div class="name">GoodBot</div>
-          <div class="num" id="rawGood">4.66</div>
-          <div class="hint">raw · 3 attestations</div>
+          <div class="id mono">#2204</div>
+          <div class="score mono" id="score-good">4.66</div>
+          <div class="delta mono" id="delta-good"></div>
+          <div class="gauge-wrap" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <circle class="track" cx="40" cy="40" r="32"></circle>
+              <circle class="fill" id="gauge-good" cx="40" cy="40" r="32"></circle>
+            </svg>
+          </div>
         </div>
-        <div class="score-card fake">
+        <div class="agent fake" id="card-fake">
+          <span class="badge-state" id="badge-fake">TOXIC</span>
           <div class="name">FakeBot</div>
-          <div class="num" id="rawFake">1.50</div>
-          <div class="hint">raw · honestly toxic</div>
+          <div class="id mono">#2205</div>
+          <div class="score mono" id="score-fake">1.50</div>
+          <div class="delta mono" id="delta-fake"></div>
+          <div class="gauge-wrap" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <circle class="track" cx="40" cy="40" r="32"></circle>
+              <circle class="fill" id="gauge-fake" cx="40" cy="40" r="32"></circle>
+            </svg>
+          </div>
         </div>
-        <div class="score-card sybil raw-glow">
+        <div class="agent sybil raw-glow" id="card-sybil">
+          <span class="badge-state" id="badge-sybil">EXPOSED</span>
           <div class="name">SybilBot</div>
-          <div class="num" id="rawSybil">4.00</div>
-          <div class="hint">raw · 3 puppets ★5</div>
-          <div class="badge-fool">FOOLS RAW AVG</div>
+          <div class="id mono">#2206</div>
+          <div class="score mono" id="score-sybil">4.00</div>
+          <div class="delta mono" id="delta-sybil"></div>
+          <div class="gauge-wrap" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <circle class="track" cx="40" cy="40" r="32"></circle>
+              <circle class="fill" id="gauge-sybil" cx="40" cy="40" r="32"></circle>
+            </svg>
+          </div>
         </div>
       </div>
+      <p class="board-hint" id="boardHint">Raw: SybilBot looks fine at <span class="hi">4.00</span> — puppets inflate the average.</p>
     </section>
 
-    <!-- S3 Weighted expose -->
-    <section class="scene" data-scene="3">
-      <div class="kicker">AgentID weighted</div>
-      <h2 class="headline display" style="max-width:18ch;font-size:clamp(28px,4.5vw,56px)">Trust-weight the attesters.</h2>
-      <div class="ring-wrap">
-        <canvas id="ring"></canvas>
-        <div class="ring-caption mono" id="ringCap">sybil ring · puppets w=10 · seed flag w=500</div>
+    <section class="panel graph-panel">
+      <div class="gh">
+        <h3>Sybil ring</h3>
+        <span id="ringModeTag">RAW · equal edges</span>
       </div>
-      <div class="drop-board">
-        <span class="big from mono" id="dropFrom">4.00</span>
-        <span class="arrow">→</span>
-        <span class="big to mono" id="dropTo">4.00</span>
-        <span class="exposed" id="exposedBadge" style="display:none">EXPOSED</span>
-      </div>
-    </section>
-
-    <!-- S4 Verdicts -->
-    <section class="scene" data-scene="4">
-      <div class="kicker green">Verdicts</div>
-      <h2 class="headline display" style="max-width:14ch;margin-bottom:22px">Access cleared — or denied.</h2>
-      <div class="verdicts">
-        <div class="verdict grant" id="vGood">
-          <div class="agent">GoodBot · #2204</div>
-          <div class="stamp">GRANT</div>
-          <p class="reason">Weighted ≥ 4.0 from seeded reviewers. Safe to route traffic.</p>
-          <div class="scores mono" id="vGoodScores">raw 4.66 · w 4.69</div>
-        </div>
-        <div class="verdict caution" id="vFake">
-          <div class="agent">FakeBot · #2205</div>
-          <div class="stamp">CAUTION</div>
-          <p class="reason">Honestly low scores. Do not grant elevated access.</p>
-          <div class="scores mono" id="vFakeScores">raw 1.50 · w 1.44</div>
-        </div>
-        <div class="verdict deny" id="vSybil">
-          <div class="agent">SybilBot · #2206</div>
-          <div class="stamp">DENY</div>
-          <p class="reason">Raw looked fine. Weighted collapsed — sockpuppet ring.</p>
-          <div class="scores mono" id="vSybilScores">raw 4.00 · w 1.22</div>
-        </div>
-      </div>
+      <canvas id="ring" aria-label="Sybil ring force graph"></canvas>
+      <p class="graph-foot" id="graphFoot">Bright puppet edges dominate the unweighted mean</p>
     </section>
   </main>
 
+  <section class="delta-strip" aria-label="Weighted minus raw">
+    <h3>Δ score (weighted − raw) · Sybil’s collapse</h3>
+    <div class="deltas">
+      <div class="delta-row good">
+        <div class="lbl">GoodBot</div>
+        <div class="track"><div class="zero"></div><div class="bar" id="dbar-good"></div></div>
+        <div class="val mono" id="dval-good">+0.03</div>
+      </div>
+      <div class="delta-row fake">
+        <div class="lbl">FakeBot</div>
+        <div class="track"><div class="zero"></div><div class="bar" id="dbar-fake"></div></div>
+        <div class="val mono" id="dval-fake">−0.06</div>
+      </div>
+      <div class="delta-row sybil">
+        <div class="lbl">SybilBot</div>
+        <div class="track"><div class="zero"></div><div class="bar" id="dbar-sybil"></div></div>
+        <div class="val mono" id="dval-sybil">−2.78</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="verdict-strip" id="verdictStrip">
+    <div class="verdict grant" id="vGood">
+      <div class="agent-lbl">GoodBot · #2204</div>
+      <div class="stamp">GRANT</div>
+      <div class="scores mono" id="vGoodScores">raw 4.66 · w 4.69</div>
+    </div>
+    <div class="verdict caution" id="vFake">
+      <div class="agent-lbl">FakeBot · #2205</div>
+      <div class="stamp">CAUTION</div>
+      <div class="scores mono" id="vFakeScores">raw 1.50 · w 1.44</div>
+    </div>
+    <div class="verdict deny" id="vSybil">
+      <div class="agent-lbl">SybilBot · #2206</div>
+      <div class="stamp">DENY</div>
+      <div class="scores mono" id="vSybilScores">raw 4.00 · w 1.22</div>
+    </div>
+  </div>
+
   <footer>
     <div class="narrator">
-      <div class="caption" id="caption"><span class="step">01 / 05</span> Agents can fake trust with sockpuppets.</div>
+      <div class="caption" id="caption"><span class="step">01 / 03</span> Raw average: SybilBot scores 4.00 — same league as GoodBot.</div>
       <div class="progress" id="progress" aria-hidden="true">
-        <i class="on"></i><i></i><i></i><i></i><i></i>
+        <i class="on"></i><i></i><i></i>
       </div>
     </div>
     <div class="links">
@@ -426,166 +530,242 @@ const CFG = {
 };
 
 const BEATS = [
-  { scene: 0, ms: 9000, aurora: "", step: "01 / 05",
-    caption: "Agents can fake trust with sockpuppets. Open feedback alone is not a gate." },
-  { scene: 1, ms: 11000, aurora: "", step: "02 / 05",
-    caption: "ERC-8004 on Monad: Identity #2204–2206 + live ReputationRegistry feedback. AgentID is the aggregator lens." },
-  { scene: 2, ms: 11000, aurora: "scene-deny", step: "03 / 05",
-    caption: "Raw average: SybilBot scores 4.00 — same league as GoodBot. The ring fools unweighted math." },
-  { scene: 3, ms: 14000, aurora: "scene-deny", step: "04 / 05",
-    caption: "AgentID EigenTrust-lite: weight each attestation by the attester. Puppets (w=10) collapse. Seed flag (w=500) wins. Sybil → 1.22." },
-  { scene: 4, ms: 14000, aurora: "scene-grant", step: "05 / 05",
-    caption: "Verdicts: GRANT GoodBot · CAUTION FakeBot · DENY SybilBot. Same feedback data — different trust function." }
+  { mode: "raw", ms: 9000, aurora: "", step: "01 / 03", showVerdicts: false,
+    caption: "Raw average: SybilBot scores 4.00 — puppets inflate the mean. Same league as GoodBot." },
+  { mode: "weighted", ms: 11000, aurora: "weighted", step: "02 / 03", showVerdicts: false,
+    caption: "Trust-weighted: puppets w=10 collapse; seed flag w=500 wins. SybilBot 4.00 → 1.22." },
+  { mode: "weighted", ms: 12000, aurora: "verdicts", step: "03 / 03", showVerdicts: true,
+    caption: "Verdicts: GRANT GoodBot · CAUTION FakeBot · DENY SybilBot. Same data — different trust function." }
 ];
 
 const scores = JSON.parse(JSON.stringify(CFG.cache));
+const CIRC = 2 * Math.PI * 32; // gauge circumference
+let mode = "raw";
 let judgeOn = true;
 let timer = null;
 let beatIdx = 0;
 let ringAnim = null;
-let dropAnim = null;
+let collapsed = false;
 
 const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
 const aurora = $("#aurora");
 const caption = $("#caption");
 const progress = $("#progress");
 const judgeBtn = $("#judgeBtn");
+const board = $("#board");
+const modeToggle = $("#modeToggle");
 
-function setScene(i) {
-  document.querySelectorAll(".scene").forEach((el) => {
-    el.classList.toggle("active", Number(el.dataset.scene) === i);
+function animateNumber(el, from, to, ms) {
+  const t0 = performance.now();
+  const dur = ms || 700;
+  (function frame(now) {
+    const p = Math.min(1, (now - t0) / dur);
+    const e = 1 - Math.pow(1 - p, 3);
+    el.textContent = (from + (to - from) * e).toFixed(2);
+    if (p < 1) requestAnimationFrame(frame);
+    else el.textContent = to.toFixed(2);
+  })(t0);
+}
+
+function setGauge(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.strokeDasharray = String(CIRC);
+  const pct = Math.max(0, Math.min(1, value / 5));
+  el.style.strokeDashoffset = String(CIRC * (1 - pct));
+}
+
+function paintDeltas(highlight) {
+  const rows = [
+    { key: "good", bar: "dbar-good", val: "dval-good", color: "#34d399" },
+    { key: "fake", bar: "dbar-fake", val: "dval-fake", color: "#fbbf24" },
+    { key: "sybil", bar: "dbar-sybil", val: "dval-sybil", color: "#ff5c7a" }
+  ];
+  rows.forEach((r) => {
+    const d = scores[r.key].w - scores[r.key].raw;
+    const el = document.getElementById(r.val);
+    const bar = document.getElementById(r.bar);
+    const sign = d >= 0 ? "+" : "−";
+    el.textContent = sign + Math.abs(d).toFixed(2);
+    // map delta onto track: center=0, left=neg, right=pos; scale ±3
+    const max = 3;
+    const pct = Math.min(1, Math.abs(d) / max) * 50;
+    if (d >= 0) {
+      bar.style.left = "50%";
+      bar.style.width = pct + "%";
+      bar.style.background = r.color;
+    } else {
+      bar.style.left = (50 - pct) + "%";
+      bar.style.width = pct + "%";
+      bar.style.background = r.color;
+    }
+    if (highlight && r.key === "sybil") {
+      bar.style.boxShadow = "0 0 12px rgba(255,92,122,.6)";
+    } else {
+      bar.style.boxShadow = "none";
+    }
   });
-  if (i === 3) startRing(true);
-  else stopRingCollapse();
-  if (i === 4) showVerdicts();
-  else hideVerdicts();
+}
+
+function setMode(next, opts) {
+  const force = opts && opts.force;
+  if (!force && next === mode) return;
+  const prev = mode;
+  mode = next;
+  const weighted = mode === "weighted";
+
+  modeToggle.classList.toggle("weighted", weighted);
+  $("#btnRaw").classList.toggle("on", !weighted);
+  $("#btnW").classList.toggle("on", weighted);
+  board.classList.toggle("weighted-mode", weighted);
+  $("#modeLabel").textContent = weighted ? "TRUST-WEIGHTED" : "RAW AVERAGE";
+
+  const keys = ["good", "fake", "sybil"];
+  keys.forEach((k) => {
+    const from = prev === "weighted" ? scores[k].w : scores[k].raw;
+    const to = weighted ? scores[k].w : scores[k].raw;
+    const scoreEl = document.getElementById("score-" + k);
+    const cur = parseFloat(scoreEl.textContent) || from;
+    animateNumber(scoreEl, cur, to, 750);
+    setGauge("gauge-" + k, to);
+
+    const dEl = document.getElementById("delta-" + k);
+    const d = scores[k].w - scores[k].raw;
+    if (weighted) {
+      dEl.textContent = (d >= 0 ? "+" : "") + d.toFixed(2);
+      dEl.className = "delta mono show " + (d >= 0 ? "up" : "down");
+    } else {
+      dEl.className = "delta mono";
+      dEl.textContent = "";
+    }
+  });
+
+  const sybilCard = $("#card-sybil");
+  const badgeG = $("#badge-good");
+  const badgeF = $("#badge-fake");
+  const badgeS = $("#badge-sybil");
+
+  if (weighted) {
+    sybilCard.classList.add("exposed");
+    sybilCard.classList.remove("raw-glow");
+    badgeG.classList.add("show");
+    badgeF.classList.add("show");
+    badgeS.classList.add("show");
+    $("#boardHint").innerHTML = 'Weighted: SybilBot <span class="lo">collapses to 1.22</span> — puppets weigh 10, seed flag weighs 500.';
+    $("#graphFoot").textContent = "Weighted: puppet edges dim (w=10); seed flag dominates — ring exposed";
+    $("#ringModeTag").textContent = "WEIGHTED · seed wins";
+    setCollapsed(true);
+    paintDeltas(true);
+  } else {
+    sybilCard.classList.remove("exposed");
+    sybilCard.classList.add("raw-glow");
+    badgeG.classList.remove("show");
+    badgeF.classList.remove("show");
+    badgeS.classList.remove("show");
+    $("#boardHint").innerHTML = 'Raw: SybilBot looks fine at <span class="hi">4.00</span> — puppets inflate the average.';
+    $("#graphFoot").textContent = "Bright puppet edges dominate the unweighted mean";
+    $("#ringModeTag").textContent = "RAW · equal edges";
+    setCollapsed(false);
+    paintDeltas(false);
+  }
+}
+
+function showVerdicts(on) {
+  $("#verdictStrip").classList.toggle("show", !!on);
 }
 
 function setBeat(i) {
   beatIdx = i;
   const b = BEATS[i];
-  setScene(b.scene);
   aurora.className = b.aurora || "";
   caption.innerHTML = `<span class="step">${b.step}</span>${b.caption}`;
   [...progress.children].forEach((el, idx) => {
     el.className = idx < i ? "done" : idx === i ? "on" : "";
   });
-  if (b.scene === 3) {
-    // reset then animate drop after short delay
-    $("#dropFrom").textContent = scores.sybil.raw.toFixed(2);
-    $("#dropTo").textContent = scores.sybil.raw.toFixed(2);
-    $("#exposedBadge").style.display = "none";
-    setTimeout(() => animateDrop(scores.sybil.raw, scores.sybil.w), 1800);
-  }
+  setMode(b.mode, { force: true });
+  showVerdicts(b.showVerdicts);
 }
 
-function showVerdicts() {
-  ["vGood","vFake","vSybil"].forEach((id, n) => {
-    const el = $("#"+id);
-    el.classList.remove("show");
-    setTimeout(() => el.classList.add("show"), 200 + n * 220);
-  });
-}
-function hideVerdicts() {
-  ["vGood","vFake","vSybil"].forEach((id) => $("#"+id).classList.remove("show"));
-}
-
-function animateDrop(from, to) {
-  cancelAnimationFrame(dropAnim);
-  const el = $("#dropTo");
-  const badge = $("#exposedBadge");
-  const t0 = performance.now();
-  const dur = 2200;
-  function frame(t) {
-    const p = Math.min(1, (t - t0) / dur);
-    const e = 1 - Math.pow(1 - p, 3);
-    const v = from + (to - from) * e;
-    el.textContent = v.toFixed(2);
-    if (p > 0.72) badge.style.display = "inline-block";
-    if (p < 1) dropAnim = requestAnimationFrame(frame);
-    else { el.textContent = to.toFixed(2); startRing(false); }
-  }
-  dropAnim = requestAnimationFrame(frame);
-}
-
-/* ---- Sybil ring canvas ---- */
+/* ---- Sybil ring ---- */
 const ring = $("#ring");
 const rctx = ring.getContext("2d");
-let nodes, edges, collapsed = false;
+let nodes = [], edges = [];
 
 function layoutRing() {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const w = ring.clientWidth, h = ring.clientHeight;
-  ring.width = w * dpr; ring.height = h * dpr;
+  const w = ring.clientWidth || 400;
+  const h = ring.clientHeight || 280;
+  ring.width = w * dpr;
+  ring.height = h * dpr;
   rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const cx = w/2, cy = h/2 - 10;
+  const cx = w / 2, cy = h / 2 - 6;
+  const R = Math.min(w, h) * 0.32;
   nodes = [
-    { id: "S", label: "SybilBot", x: cx, y: cy, r: 28, color: "#f472b6" },
-    { id: "P1", label: "puppet", x: cx - 140, y: cy - 70, r: 16, color: "#fb7185", w: 10 },
-    { id: "P2", label: "puppet", x: cx + 140, y: cy - 70, r: 16, color: "#fb7185", w: 10 },
-    { id: "P3", label: "puppet", x: cx, y: cy + 120, r: 16, color: "#fb7185", w: 10 },
-    { id: "A1", label: "seed ★1", x: cx + 160, y: cy + 90, r: 18, color: "#5ce1ff", w: 500 }
+    { id: "S", label: "SybilBot", x: cx, y: cy, r: 26, color: "#f472b6" },
+    { id: "P1", label: "puppet", x: cx - R * 1.15, y: cy - R * 0.55, r: 15, color: "#fb7185", w: 10 },
+    { id: "P2", label: "puppet", x: cx + R * 1.15, y: cy - R * 0.55, r: 15, color: "#fb7185", w: 10 },
+    { id: "P3", label: "puppet", x: cx, y: cy + R * 1.05, r: 15, color: "#fb7185", w: 10 },
+    { id: "A1", label: "seed ★1", x: cx + R * 1.2, y: cy + R * 0.75, r: 17, color: "#5ce1ff", w: 500 }
   ];
   edges = [
-    { a: 1, b: 0, score: 5, color: "#f472b6" },
-    { a: 2, b: 0, score: 5, color: "#f472b6" },
-    { a: 3, b: 0, score: 5, color: "#f472b6" },
-    { a: 4, b: 0, score: 1, color: "#5ce1ff" }
+    { a: 1, b: 0, color: "#f472b6" },
+    { a: 2, b: 0, color: "#f472b6" },
+    { a: 3, b: 0, color: "#f472b6" },
+    { a: 4, b: 0, color: "#5ce1ff" }
   ];
 }
 
 function drawRing() {
-  const w = ring.clientWidth, h = ring.clientHeight;
+  const w = ring.clientWidth || 400, h = ring.clientHeight || 280;
   rctx.clearRect(0, 0, w, h);
   edges.forEach((e) => {
     const A = nodes[e.a], B = nodes[e.b];
-    const thin = collapsed && e.color === "#f472b6";
+    const puppet = e.color === "#f472b6";
+    const thin = collapsed && puppet;
     rctx.beginPath();
     rctx.moveTo(A.x, A.y); rctx.lineTo(B.x, B.y);
-    rctx.strokeStyle = thin ? "rgba(244,114,182,.18)" : e.color;
-    rctx.lineWidth = thin ? 1.5 : (e.color === "#5ce1ff" ? (collapsed ? 5 : 2.5) : 3);
-    rctx.globalAlpha = thin ? 0.5 : 1;
+    rctx.strokeStyle = thin ? "rgba(244,114,182,.2)" : e.color;
+    rctx.lineWidth = thin ? 1.5 : (puppet ? 3.2 : (collapsed ? 5.5 : 2.5));
+    rctx.globalAlpha = thin ? 0.55 : 1;
     rctx.stroke();
     rctx.globalAlpha = 1;
   });
   nodes.forEach((n) => {
     rctx.beginPath();
-    rctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+    rctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
     rctx.fillStyle = n.color;
-    rctx.globalAlpha = 0.9;
+    rctx.globalAlpha = 0.92;
     rctx.fill();
     rctx.globalAlpha = 1;
     rctx.fillStyle = "#03040a";
     rctx.font = "bold 11px JetBrains Mono, monospace";
     rctx.textAlign = "center"; rctx.textBaseline = "middle";
     rctx.fillText(n.id, n.x, n.y);
-    rctx.fillStyle = "rgba(245,247,255,.7)";
+    rctx.fillStyle = "rgba(245,247,255,.72)";
     rctx.font = "11px Instrument Sans, sans-serif";
-    rctx.fillText(n.label, n.x, n.y + n.r + 14);
+    rctx.fillText(n.label, n.x, n.y + n.r + 13);
   });
 }
 
-function startRing(rawMode) {
-  collapsed = !rawMode ? true : false;
-  layoutRing();
+function setCollapsed(on) {
+  collapsed = !!on;
   drawRing();
+}
+
+function startRingLoop() {
   cancelAnimationFrame(ringAnim);
-  let t0 = performance.now();
+  const t0 = performance.now();
   function tick(t) {
-    const wobble = Math.sin((t - t0) / 600) * 2;
-    nodes[1].x += Math.sin(t/700)*0.15;
-    nodes[2].x -= Math.sin(t/650)*0.15;
-    nodes[3].y += Math.cos(t/800)*0.12;
+    if (nodes.length > 3) {
+      nodes[1].x += Math.sin(t / 700) * 0.12;
+      nodes[2].x -= Math.sin(t / 650) * 0.12;
+      nodes[3].y += Math.cos(t / 800) * 0.1;
+    }
     drawRing();
     ringAnim = requestAnimationFrame(tick);
   }
   ringAnim = requestAnimationFrame(tick);
-  $("#ringCap").textContent = collapsed
-    ? "weighted · puppets dim · seed edge dominates"
-    : "raw · all edges equal · ring fools the mean";
-}
-function stopRingCollapse() {
-  cancelAnimationFrame(ringAnim);
 }
 
 /* ---- Judge autopilot ---- */
@@ -595,7 +775,7 @@ function runJudge(from) {
   clearTimer();
   judgeOn = true;
   judgeBtn.classList.add("on");
-  let i = from || 0;
+  let i = (from == null) ? 0 : from;
   function next() {
     setBeat(i);
     const ms = BEATS[i].ms;
@@ -617,13 +797,28 @@ judgeBtn.addEventListener("click", () => {
 });
 $("#replayBtn").addEventListener("click", () => runJudge(0));
 
-/* click scenes manually when judge off */
-document.querySelectorAll(".scene").forEach(() => {});
 progress.addEventListener("click", (e) => {
   const kids = [...progress.children];
   const idx = kids.indexOf(e.target);
-  if (idx >= 0) { clearTimer(); setBeat(idx); if (judgeOn) runJudge(idx); }
+  if (idx >= 0) {
+    clearTimer();
+    setBeat(idx);
+    if (judgeOn) runJudge(idx);
+  }
 });
+
+$("#btnRaw").onclick = () => {
+  if (judgeOn) stopJudge();
+  showVerdicts(false);
+  aurora.className = "";
+  setMode("raw", { force: true });
+};
+$("#btnW").onclick = () => {
+  if (judgeOn) stopJudge();
+  showVerdicts(false);
+  aurora.className = "weighted";
+  setMode("weighted", { force: true });
+};
 
 /* ---- Particles ---- */
 (function particles() {
@@ -632,20 +827,20 @@ progress.addEventListener("click", (e) => {
   let pts = [];
   function resize() {
     c.width = innerWidth; c.height = innerHeight;
-    pts = Array.from({ length: 48 }, () => ({
-      x: Math.random()*c.width, y: Math.random()*c.height,
-      vx: (Math.random()-.5)*.25, vy: (Math.random()-.5)*.25,
-      r: Math.random()*1.8+.4
+    pts = Array.from({ length: 40 }, () => ({
+      x: Math.random() * c.width, y: Math.random() * c.height,
+      vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25,
+      r: Math.random() * 1.6 + .4
     }));
   }
   function tick() {
-    ctx.clearRect(0,0,c.width,c.height);
-    ctx.fillStyle = "rgba(167,139,250,.45)";
-    pts.forEach(p => {
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.fillStyle = "rgba(167,139,250,.4)";
+    pts.forEach((p) => {
       p.x += p.vx; p.y += p.vy;
       if (p.x < 0 || p.x > c.width) p.vx *= -1;
       if (p.y < 0 || p.y > c.height) p.vy *= -1;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
     });
     requestAnimationFrame(tick);
   }
@@ -653,25 +848,28 @@ progress.addEventListener("click", (e) => {
   resize(); tick();
 })();
 
-
 function paintScores() {
   const g = scores.good, f = scores.fake, s = scores.sybil;
-  const el = (id) => document.getElementById(id);
-  if (el('rawGood')) el('rawGood').textContent = g.raw.toFixed(2);
-  if (el('rawFake')) el('rawFake').textContent = f.raw.toFixed(2);
-  if (el('rawSybil')) el('rawSybil').textContent = s.raw.toFixed(2);
-  if (el('dropFrom')) el('dropFrom').textContent = s.raw.toFixed(2);
-  if (el('vGoodScores')) el('vGoodScores').textContent = `raw ${g.raw.toFixed(2)} · w ${g.w.toFixed(2)}`;
-  if (el('vFakeScores')) el('vFakeScores').textContent = `raw ${f.raw.toFixed(2)} · w ${f.w.toFixed(2)}`;
-  if (el('vSybilScores')) el('vSybilScores').textContent = `raw ${s.raw.toFixed(2)} · w ${s.w.toFixed(2)}`;
+  const val = (k) => (mode === "weighted" ? scores[k].w : scores[k].raw);
+  ["good", "fake", "sybil"].forEach((k) => {
+    const el = document.getElementById("score-" + k);
+    if (el) el.textContent = val(k).toFixed(2);
+    setGauge("gauge-" + k, val(k));
+  });
+  const vg = document.getElementById("vGoodScores");
+  const vf = document.getElementById("vFakeScores");
+  const vs = document.getElementById("vSybilScores");
+  if (vg) vg.textContent = `raw ${g.raw.toFixed(2)} · w ${g.w.toFixed(2)}`;
+  if (vf) vf.textContent = `raw ${f.raw.toFixed(2)} · w ${f.w.toFixed(2)}`;
+  if (vs) vs.textContent = `raw ${s.raw.toFixed(2)} · w ${s.w.toFixed(2)}`;
+  paintDeltas(mode === "weighted");
 }
 
-/* ---- Live RPC ---- */
 async function liveScores() {
   const chip = document.getElementById("rpcChip");
   const SEL = {
-    "getReputation(uint256)": "0x89370d8b",
-    "getWeightedReputation(uint256)": "0xd80f0a7d"
+    raw: "0x89370d8b",
+    w: "0xd80f0a7d"
   };
   function decodeX100(hex) {
     if (!hex || hex === "0x" || hex.length < 66) return null;
@@ -694,11 +892,10 @@ async function liveScores() {
     return j.result;
   }
   try {
-    const ids = [1, 2, 3];
     const out = [];
-    for (const id of ids) {
-      out.push(decodeX100(await call(SEL["getReputation(uint256)"], id)));
-      out.push(decodeX100(await call(SEL["getWeightedReputation(uint256)"], id)));
+    for (const id of [1, 2, 3]) {
+      out.push(decodeX100(await call(SEL.raw, id)));
+      out.push(decodeX100(await call(SEL.w, id)));
     }
     const [gR, gW, fR, fW, sR, sW] = out;
     if (gR == null || sW == null) throw new Error("decode");
@@ -715,14 +912,21 @@ async function liveScores() {
   }
 }
 
-paintScores();
-liveScores();
+/* boot */
 layoutRing();
-const sp=new URLSearchParams(location.search);
-const sc=sp.get('scene');
-if(sc!==null){stopJudge();setBeat(Math.min(4,Math.max(0,Number(sc))));}
-else runJudge(0);
-</script>
+startRingLoop();
+paintScores();
+setMode("raw", { force: true });
+liveScores();
 
+const sp = new URLSearchParams(location.search);
+const sc = sp.get("scene");
+if (sc !== null) {
+  stopJudge();
+  setBeat(Math.min(2, Math.max(0, Number(sc))));
+} else {
+  runJudge(0);
+}
+</script>
 </body>
 </html>
