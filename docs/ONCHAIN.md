@@ -109,7 +109,7 @@ Addresses (public):
 ```bash
 # script/Register8004.s.sol
 export PRIVATE_KEY=0x...
-export AGENT_URI=https://jimmywangjimmy.github.io/AgentID/agents/good-bot.json
+export AGENT_URI=https://talentos-ai.github.io/AgentID/agents/good-bot.json
 forge script script/Register8004.s.sol:Register8004 --rpc-url https://testnet-rpc.monad.xyz --broadcast
 ```
 

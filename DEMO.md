@@ -1,6 +1,6 @@
 # AgentID — Judge Mode
 
-**Live:** https://jimmywangjimmy.github.io/AgentID/
+**Live:** https://talentos-ai.github.io/AgentID/
 
 ## How to watch (~60s)
 

@@ -242,9 +242,9 @@ Challenge to current story: GoodBot 4.66 vs FakeBot 1.50 is **label theater** un
 - https://github.com/VibeTensor/attestix  
 
 ### AgentID live
-- Repo: https://github.com/JimmyWangJimmy/AgentID  
+- Repo: https://github.com/TalentOS-AI/AgentID  
 - Contract: https://testnet.monadvision.com/address/0xDCcBbFFC7D0912674760579fAba210a2a729f859  
-- Demo: https://jimmywangjimmy.github.io/AgentID/  
+- Demo: https://talentos-ai.github.io/AgentID/  
 
 ---
 

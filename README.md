@@ -14,7 +14,7 @@ Punchline: SybilBot fools raw (4.00). Weighted collapses it (1.22).
 
 ## 30-second demo
 
-1. Open **https://jimmywangjimmy.github.io/AgentID/**
+1. Open **https://talentos-ai.github.io/AgentID/**
 2. Leave **Judge Mode** on (default) — ~60s autopilot: Problem → 8004 feedback → raw fool → weighted expose → GRANT / CAUTION / DENY.
 3. Or hit **Replay**.
 
@@ -22,9 +22,9 @@ Punchline: SybilBot fools raw (4.00). Weighted collapses it (1.22).
 
 | Field | Value |
 |-------|-------|
-| **Repo** | https://github.com/JimmyWangJimmy/AgentID |
-| **Demo** | https://jimmywangjimmy.github.io/AgentID/ |
-| **Video** | https://jimmywangjimmy.github.io/AgentID/AgentID-demo-1min.mp4 |
+| **Repo** | https://github.com/TalentOS-AI/AgentID |
+| **Demo** | https://talentos-ai.github.io/AgentID/ |
+| **Video** | https://talentos-ai.github.io/AgentID/AgentID-demo-1min.mp4 |
 | **AgentID scorer** | [`0x8916357EDB7598d20E257404213CF3D1C099c310`](https://testnet.monadvision.com/address/0x8916357EDB7598d20E257404213CF3D1C099c310) |
 | **8004 Identity** | [`0x8004A818…BD9e`](https://testnet.monadvision.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) |
 | **8004 Reputation** | [`0x8004B663…8713`](https://testnet.monadvision.com/address/0x8004B663056A597Dffe9eCcC1965A193B7388713) |
@@ -45,3 +45,8 @@ npm test && forge test -vv
 ```
 
 **Jimmy Wang** · Metropolis · Trust / Identity & AI Infrastructure · MIT
+
+
+---
+
+Maintained by [TalentOS](https://www.agentbay.asia) · 需要定制 Agent / 技能开发？[找我们定制 / Work with us](https://www.agentbay.asia/contact) · talentos@agentbay.asia
